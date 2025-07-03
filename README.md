@@ -17,8 +17,8 @@ steg-cryptography/
 │   ├── rsa_module.py           # RSA keypair generation, encryption/decryption
 │   ├── hmac_module.py          # HMAC signing and verification
 │   ├── stego_module.py         # Steganography encoding and decoding
-│   ├── encrypt.py              # Full encryption pipeline (AES + RSA + HMAC + Stego)
-│   └── decrypt.py              # Full decryption pipeline
+│   ├── encrypt_full.py         # Full encryption pipeline (AES + RSA + HMAC + Stego)
+│   └── decrypt_full.py         # Full decryption pipeline
 │
 ├── tests/                      # Unit tests for each module
 │   ├── __init__.py
