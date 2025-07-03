@@ -29,7 +29,7 @@ steg-cryptography/
 │   ├── test_encrypt.py         # Tests the full encryption pipeline
 │   └── test_decrypt.py         # Tests the full decryption pipeline
 │
-├── static/                     # (Optional) Image/media files for web app
+├── static/                     # (Optional) Image/media files for web app and steganography process
 ├── templates/                  # (Optional) HTML templates for Flask
 │
 ├── cli_demo.py                 # Script to run demo from the command line
