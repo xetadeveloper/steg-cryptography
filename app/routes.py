@@ -17,10 +17,8 @@ from core.decrypt_full import decrypt_full_pipeline
 
 main = Blueprint('main', __name__)
 
-# Temporary in-memory storage for development (replace with MongoDB later)
-users_db = {}
-messages_db = {}
-message_counter = 1
+# Import MongoDB models
+from models import User, Message
 
 class TempUser:
     def __init__(self, username, email, display_name):

@@ -1,8 +1,4 @@
-"""
-Authentication routes for user login, registration, and session management.
-"""
-
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from models import User, LoginAttempt, UserSession
 import re
@@ -28,7 +24,7 @@ def login():
     
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
+        password = request.form.get('password')
         remember = bool(request.form.get('remember'))
         
         if not username or not password:
@@ -45,9 +41,16 @@ def login():
         ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
         user_agent = request.headers.get('User-Agent')
         
+        # Log attempt
+        LoginAttempt.log_attempt(
+            username=username,
+            ip_address=ip_address,
+            success=user is not None and user.check_password(password),
+            user_agent=user_agent
+        )
+        
         if user and user.check_password(password):
             # Successful login
-            LoginAttempt.log_attempt(username, ip_address, True, user_agent)
             login_user(user, remember=remember)
             user.update_last_seen()
             
@@ -63,7 +66,6 @@ def login():
             return redirect(url_for('main.dashboard'))
         else:
             # Failed login
-            LoginAttempt.log_attempt(username, ip_address, False, user_agent)
             flash('Invalid username or password.', 'error')
     
     return render_template('auth/login.html')
@@ -78,8 +80,8 @@ def register():
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
         display_name = request.form.get('display_name', '').strip()
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
         
         # Validation
         errors = []
