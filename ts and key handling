@@ -1,0 +1,259 @@
+warning: in the working copy of 'private.pem', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public.pem', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/cli_demo.py b/cli_demo.py[m
+[1mindex 08a4867..5bdfa87 100644[m
+[1m--- a/cli_demo.py[m
+[1m+++ b/cli_demo.py[m
+[36m@@ -1,104 +1,55 @@[m
+[31m-# # from crypto import rsa_module[m
+[32m+[m[32m# from core import rsa_module, aes_module[m
+ [m
+[31m-# # private_key, public_key = rsa_module.generate_rsa_keypair()[m
+[31m-# # rsa_utils.save_private_key(private_key, "private.pem")[m
+[31m-# # rsa_utils.save_public_key(public_key, "public.pem")[m
+[31m-[m
+[31m-# # print("RSA keys generated and saved.")[m
+[31m-# # cli_main.py[m
+[31m-[m
+[31m-# from crypto import rsa_utils[m
+ # import os[m
+ [m
+ # def main():[m
+ #     print("🔐 Secure Message Concealment Test: RSA + AES Key")[m
+ [m
+[31m-#     # Step 1: Generate RSA keypair (you can skip this if keys already exist)[m
+[32m+[m[32m#     # Generate RSA keypair[m
+ #     print("📁 Generating RSA Key Pair...")[m
+[31m-#     private_key, public_key = rsa_utils.generate_rsa_keypair()[m
+[31m-[m
+[31m-#     rsa_utils.save_private_key(private_key, "private.pem")[m
+[31m-#     rsa_utils.save_public_key(public_key, "public.pem")[m
+[32m+[m[32m#     private_key, public_key = rsa_module.generate_rsa_keypair()[m
+[32m+[m[32m#     rsa_module.save_private_key(private_key, "private.pem")[m
+[32m+[m[32m#     rsa_module.save_public_key(public_key, "public.pem")[m
+ #     print("✅ RSA keys saved as private.pem and public.pem\n")[m
+ [m
+[31m-#     # Step 2: Generate AES key (32 bytes for AES-256)[m
+[32m+[m[32m#     # Generate AES key[m
+ #     aes_key = os.urandom(32)[m
+ #     print(f"🔑 Generated AES Key: {aes_key.hex()}\n")[m
+ [m
+[31m-#     # Step 3: Encrypt AES key with public RSA key[m
+[32m+[m[32m#     # Encrypt AES key with public key[m
+ #     print("🔒 Encrypting AES key with RSA public key...")[m
+[31m-#     loaded_public = rsa_utils.load_public_key("public.pem")[m
+[31m-#     encrypted_aes_key = rsa_utils.encrypt_aes_key(aes_key, loaded_public)[m
+[32m+[m[32m#     loaded_public = rsa_module.load_public_key("public.pem")[m
+[32m+[m[32m#     encrypted_aes_key = rsa_module.encrypt_aes_key(aes_key, loaded_public)[m
+ #     print(f"✅ Encrypted AES Key (hex): {encrypted_aes_key.hex()}\n")[m
+ [m
+[31m-#     # Step 4: Decrypt AES key using RSA private key[m
+[32m+[m[32m#     # Decrypt AES key with private key[m
+ #     print("🔓 Decrypting AES key with RSA private key...")[m
+[31m-#     loaded_private = rsa_utils.load_private_key("private.pem")[m
+[31m-#     decrypted_aes_key = rsa_utils.decrypt_aes_key(encrypted_aes_key, loaded_private)[m
+[32m+[m[32m#     loaded_private = rsa_module.load_private_key("private.pem")[m
+[32m+[m[32m#     decrypted_aes_key = rsa_module.decrypt_aes_key(encrypted_aes_key, loaded_private)[m
+ #     print(f"✅ Decrypted AES Key: {decrypted_aes_key.hex()}\n")[m
+ [m
+[31m-#     # Step 5: Compare original and decrypted keys[m
+ #     if aes_key == decrypted_aes_key:[m
+ #         print("✅ SUCCESS: AES key encryption/decryption via RSA is correct.")[m
+ #     else:[m
+[31m-#         print("❌ ERROR: Decrypted AES key does not match original!")[m
+[31m-[m
+[31m-# if __name__ == "__main__":[m
+[31m-#     main()[m
+[31m-[m
+[31m-[m
+[31m-from core import rsa_module, aes_module[m
+[31m-[m
+[31m-import os[m
+[32m+[m[32m#         print("❌ ERROR: AES key mismatch!")[m
+ [m
+[31m-def main():[m
+[31m-    print("🔐 Secure Message Concealment Test: RSA + AES Key")[m
+[32m+[m[32m#     # ✅ AES Message Encryption/Decryption[m
+[32m+[m[32m#     print("\n🧪 Testing AES encryption/decryption with a real message")[m
+[32m+[m[32m#     message = b"This is a top secret message from Yashika."[m
+ [m
+[31m-    # Generate RSA keypair[m
+[31m-    print("📁 Generating RSA Key Pair...")[m
+[31m-    private_key, public_key = rsa_module.generate_rsa_keypair()[m
+[31m-    rsa_module.save_private_key(private_key, "private.pem")[m
+[31m-    rsa_module.save_public_key(public_key, "public.pem")[m
+[31m-    print("✅ RSA keys saved as private.pem and public.pem\n")[m
+[32m+[m[32m#     print("🔐 Encrypting message with AES...")[m
+[32m+[m[32m#     nonce, ciphertext = aes_module.aes_encrypt(message, aes_key)[m
+[32m+[m[32m#     print(f"Nonce: {nonce.hex()}")[m
+[32m+[m[32m#     print(f"Ciphertext: {ciphertext.hex()}")[m
+ [m
+[31m-    # Generate AES key[m
+[31m-    aes_key = os.urandom(32)[m
+[31m-    print(f"🔑 Generated AES Key: {aes_key.hex()}\n")[m
+[32m+[m[32m#     print("🔓 Decrypting message...")[m
+[32m+[m[32m#     decrypted_message = aes_module.aes_decrypt(nonce, ciphertext, aes_key)[m
+[32m+[m[32m#     print(f"Decrypted: {decrypted_message.decode()}")[m
+ [m
+[31m-    # Encrypt AES key with public key[m
+[31m-    print("🔒 Encrypting AES key with RSA public key...")[m
+[31m-    loaded_public = rsa_module.load_public_key("public.pem")[m
+[31m-    encrypted_aes_key = rsa_module.encrypt_aes_key(aes_key, loaded_public)[m
+[31m-    print(f"✅ Encrypted AES Key (hex): {encrypted_aes_key.hex()}\n")[m
+[31m-[m
+[31m-    # Decrypt AES key with private key[m
+[31m-    print("🔓 Decrypting AES key with RSA private key...")[m
+[31m-    loaded_private = rsa_module.load_private_key("private.pem")[m
+[31m-    decrypted_aes_key = rsa_module.decrypt_aes_key(encrypted_aes_key, loaded_private)[m
+[31m-    print(f"✅ Decrypted AES Key: {decrypted_aes_key.hex()}\n")[m
+[31m-[m
+[31m-    if aes_key == decrypted_aes_key:[m
+[31m-        print("✅ SUCCESS: AES key encryption/decryption via RSA is correct.")[m
+[31m-    else:[m
+[31m-        print("❌ ERROR: AES key mismatch!")[m
+[31m-[m
+[31m-    # ✅ AES Message Encryption/Decryption[m
+[31m-    print("\n🧪 Testing AES encryption/decryption with a real message")[m
+[31m-    message = b"This is a top secret message from Yashika."[m
+[31m-[m
+[31m-    print("🔐 Encrypting message with AES...")[m
+[31m-    nonce, ciphertext = aes_module.aes_encrypt(message, aes_key)[m
+[31m-    print(f"Nonce: {nonce.hex()}")[m
+[31m-    print(f"Ciphertext: {ciphertext.hex()}")[m
+[31m-[m
+[31m-    print("🔓 Decrypting message...")[m
+[31m-    decrypted_message = aes_module.aes_decrypt(nonce, ciphertext, aes_key)[m
+[31m-    print(f"Decrypted: {decrypted_message.decode()}")[m
+[31m-[m
+[31m-    if decrypted_message == message:[m
+[31m-        print("✅ SUCCESS: AES encryption/decryption works correctly.")[m
+[31m-    else:[m
+[31m-        print("❌ ERROR: AES message mismatch!")[m
+[32m+[m[32m#     if decrypted_message == message:[m
+[32m+[m[32m#         print("✅ SUCCESS: AES encryption/decryption works correctly.")[m
+[32m+[m[32m#     else:[m
+[32m+[m[32m#         print("❌ ERROR: AES message mismatch!")[m
+ [m
+[31m-if __name__ == "__main__":[m
+[31m-    main()[m
+[32m+[m[32m# if __name__ == "__main__":[m
+[32m+[m[32m#     main()[m
+[1mdiff --git a/private.pem b/private.pem[m
+[1mindex 5413fed..33a81a7 100644[m
+[1m--- a/private.pem[m
+[1m+++ b/private.pem[m
+[36m@@ -1,28 +1,28 @@[m
+ -----BEGIN PRIVATE KEY-----[m
+[31m-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4sE/7Zf8o+GDm[m
+[31m-rWJuwnvI+j8TpbpKkQkFTbnWKZpox9Ub939+dSnxfVhymmZwrfXATjB92ML8OK+k[m
+[31m-WOGZe7H3i6q6qBC6TNyfjMMfoKB/VP0utOZK6GqB4y75awHtytJfI/cfE2Y7Yb1y[m
+[31m-tVmLofcVW1jVzwzfVHvyRJdKw86gqWhzJ2eFN0Vk8fpiVmM1vvP8Pin1zuJW9/C6[m
+[31m-sc7fxzTiPa9/9zBmO9yhGYALCCD37kyAE0wCmh+mUie9DvYZKRoQHmYLwjRsK0oC[m
+[31m-0OSencsMm0kO+ic03LLV5NKNq+Bl6zuGrr5ARHemi4IlBCSkCENKKB5NNjWDU8nB[m
+[31m-V699ay1DAgMBAAECggEAEgTwcMn1Tg/Zvc1Ehs5GhIfXQqP58TowWUpJljnDPR44[m
+[31m-znyPKGKRtTmHuSVpAZe/cUP6Wt+cupNknlImWggQXON4GgkOxMEotLpnnpIt8UPK[m
+[31m-BgC+sqf1cvccR1fSPYX7O4QcoXVjlT9Ghsa8gLFMlFKwGqrpCcXKPWDFgBUVomVq[m
+[31m-RS9G3DM2soBTatl3+1trNiAtK0HUXwxuTGmFR2YngpbP0etZFDc2pc47NphM3c/0[m
+[31m-2LSsrdWWxGFqWS7xtUNK0jBWzWqyDkFmCtV5zsWH3yQLE58Fd4Gal/Ku1M3RQwaQ[m
+[31m-m4GNe49eyaMSDUYk+AYSE5XgHSGukK0j3tVYZnVLDQKBgQDyA6eg6Zoj9ATKpmti[m
+[31m-3dmPyPuS4vD6II9ds0LLwzCSUrAiVZze7lsV+vAj7wJ+7su28YmrVFA+DgZLUIhv[m
+[31m-/Uv7YSPQBBwk1TQXMb8fl4yDZeQRKFdRHMi7RObol5M4Tdfv0Ury7E5iDS06JttS[m
+[31m-t41A+hq8PmncYrjmtCQwIta0rwKBgQDDXJYwElNhf2D2P3uBp6Ounp9ZfKSu4ORM[m
+[31m-xXKIzawog1sJIsd4m6pmBuNNRra1j/OkSKIPqxTlQmyRf5ProF1QN1EUHVQZwsz8[m
+[31m-9VJc47OkY47Ry2uyI+LMWgEGjEK0pSTreKlRbPoDmIGqebexoKnEhE1EQcyv8Fbo[m
+[31m-5eBusyjdrQKBgHfNK1vSh8UodH7EpwAIBjzRJwftY5DOMWoW5QftFcw5NouoicEp[m
+[31m-iNl2oQ2IsVmYaCuloZq4YAh39NGvifq2Drjfu1Sr1Cq/h8u7inrfEGWzOJTtvVuf[m
+[31m-vhZF43BcKDqE/lHu7wUVyS9simjw9z0ZM8lohXeOBeVc0V8S6Z8Sf+ptAoGAEJzd[m
+[31m-9KaKSp8vWqFZWlQsGhxJBq4PvwNGxrR/odyDiEprQmKfvcTW/6gUSiz6OoRMPqsi[m
+[31m-hNySgVBdtR25MW9IoBqkHWbFEQ+8qMIfx+BhFViV+4cl2Fcu4RvCPJFO1te4RQHU[m
+[31m-vCTdOdMNK7cABO3ZoelyPJyv0EJK0bFCnYdEsV0CgYEAqmFOF1hzTC60kzdOnMdb[m
+[31m-uCQIrhVtLKXQN9z/7nhL/oKhBDZF3FmzQWYhhp0EUQEs4NtrDZYUj30cdsuzbQkP[m
+[31m-uAJH2Sr+1oOUJtHxIkSOhmoQN4Xdod/1+ykSD+aGpOqDd/WxOuyH17rvxeZYNQYW[m
+[31m-SuLklzLZmkiJ4ST8MMGVn8A=[m
+[32m+[m[32mMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCy8zKCEALykBUu[m
+[32m+[m[32mejHwv6EJneN/sWXJabUkT5yNOZot2/xPV/SVyrThHkQ2mixGXFyTYa25okAJPC7x[m
+[32m+[m[32mrdmEY8zJBK3M724Z/mEaOQmXKlKGJN79I7levI/30dj4e8az+cIMO/fMrmr+i+JD[m
+[32m+[m[32mTWndYREvDyi7hZwysWYGLHFXNZVkJrxiNf/w7MPIPZvYTrjlWFyPPQswVA4zwm3/[m
+[32m+[m[32mJ84mw3TA+Mmo0tvowaEvhklM2Sq5K+5KAHJkdQKWHvwogooUpaO9ClpuZ3NFEvAn[m
+[32m+[m[32mKd07YVHWwwz6B6HcgZNMrCwvueDYgw6Q+ZVs4559k4+6HHdUVwV8rHhjrTjbe/4i[m
+[32m+[m[32mO+zgIfolAgMBAAECggEABfpQSV56DrrH7lvIH8vy9/SFhT46kXodwjcDmoceUqJa[m
+[32m+[m[32m4Ral1bwmAzAk5LMNQBN1RzoX2M/l9jkDs3CUh9LipCNrH+GuqqEgAsV9f8Z6577D[m
+[32m+[m[32mES84kcTYRVXF+vT9jAUPmaOGMVjxO4wWNJvZKbtEnO8TdAIwV9QrvZCN/7ULRsNj[m
+[32m+[m[32mMloTLbdpSbOdAJojq9nAnI3aNkJc7mIr4BPEwE/sFA+W0CBh968TS7GzrLWNf5Pt[m
+[32m+[m[32mLS72j8NX08ld7R9LQwLRPfiKTbrQt/d0DLB8RL2fiBwvEPzQg8m8NvI+eIyuW1yG[m
+[32m+[m[32mPGF+MnDTf6HNp/oRf8BZwuTe+gM4Rmk7Sde6pSy30QKBgQDWl0VTo9ebQekmoA0D[m
+[32m+[m[32mYL410n78pMPca4uzUSxTgd+XQg26un5CT5wZCZ+7gm+qr2RyIdbwQNuR8KHXoW0B[m
+[32m+[m[32msOhnGwwFi7XD5r2lqI4/mZ8FhDju+r0IOPpLY8RSsBmk/B+NJAxLZfFlY6MDaIG4[m
+[32m+[m[32mqJ5gK1jeUWUES7IBvzbfB+pElQKBgQDVe0aO6pVoAdqlbiWr0ESeJososkKOe5SC[m
+[32m+[m[32mlIg6/iZTiy1CH5ED4mbBNcZahmrDHUl1L7ekubJWLLsQaoa1z/uIm1qIMDzBjFO1[m
+[32m+[m[32m4fglQAOTEe/b96VmYUjlT/Wg3h7xoaSKD3+Q1sukP3g/KtfvEuAjm66IsOGmHpha[m
+[32m+[m[32mVdzM9PhrUQKBgQDUdmted27GOojUBE0+Fe/drC6sh5mgSB7GCM2BVKoCwZSEV5cg[m
+[32m+[m[32mol+j7oJnDarv7L3fvp9nul9q7DvhGeOqc/R1+TJ63yu07WTBetR0Je5rcNFJ05mL[m
+[32m+[m[32mZZZzRDEhyVdqoXG/tXwyvpk10GOawUMGiHReNSzE2QPSL/vrfN2gDt8kzQKBgDyw[m
+[32m+[m[32mYfupFrZNqKHU8WKpv4gSPwdfveoRmcORhDT5IV4ot8IPhUNMbpfIuM3tXpZ/Ue29[m
+[32m+[m[32mlgB/RgKXjsp47jjrmn9YYuFKjUscoIOZbNjyHNIHjF/FREEZsQZ3t8V2v+dDY6pY[m
+[32m+[m[32mA5Tia1wTKxUSEfcGL7APxwtW9Z8rHXa46B9gGOsxAoGAefSORX2junNrTa5i+Ia6[m
+[32m+[m[32mLAWtbTOxFweaC6P41o/962VFq/8qrNnRnveGaa9oHZW7NLzM/gzKZUHuPfX1EVQe[m
+[32m+[m[32m1429zIEMQQDxW3IejT30iwmnf2XynHH/Ad+DX78IKq7Kj+TZvH88MStWdVDnnRhN[m
+[32m+[m[32msOZuIJwLOBCHbt7ioraaZ4k=[m
+ -----END PRIVATE KEY-----[m
+[1mdiff --git a/public.pem b/public.pem[m
+[1mindex ccca1de..56747be 100644[m
+[1m--- a/public.pem[m
+[1m+++ b/public.pem[m
+[36m@@ -1,9 +1,9 @@[m
+ -----BEGIN PUBLIC KEY-----[m
+[31m-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuLBP+2X/KPhg5q1ibsJ7[m
+[31m-yPo/E6W6SpEJBU251imaaMfVG/d/fnUp8X1YcppmcK31wE4wfdjC/DivpFjhmXux[m
+[31m-94uquqgQukzcn4zDH6Cgf1T9LrTmSuhqgeMu+WsB7crSXyP3HxNmO2G9crVZi6H3[m
+[31m-FVtY1c8M31R78kSXSsPOoKlocydnhTdFZPH6YlZjNb7z/D4p9c7iVvfwurHO38c0[m
+[31m-4j2vf/cwZjvcoRmACwgg9+5MgBNMApofplInvQ72GSkaEB5mC8I0bCtKAtDknp3L[m
+[31m-DJtJDvonNNyy1eTSjavgZes7hq6+QER3pouCJQQkpAhDSigeTTY1g1PJwVevfWst[m
+[31m-QwIDAQAB[m
+[32m+[m[32mMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsvMyghAC8pAVLnox8L+h[m
+[32m+[m[32mCZ3jf7FlyWm1JE+cjTmaLdv8T1f0lcq04R5ENposRlxck2GtuaJACTwu8a3ZhGPM[m
+[32m+[m[32myQStzO9uGf5hGjkJlypShiTe/SO5XryP99HY+HvGs/nCDDv3zK5q/oviQ01p3WER[m
+[32m+[m[32mLw8ou4WcMrFmBixxVzWVZCa8YjX/8OzDyD2b2E645Vhcjz0LMFQOM8Jt/yfOJsN0[m
+[32m+[m[32mwPjJqNLb6MGhL4ZJTNkquSvuSgByZHUClh78KIKKFKWjvQpabmdzRRLwJyndO2FR[m
+[32m+[m[32m1sMM+geh3IGTTKwsL7ng2IMOkPmVbOOefZOPuhx3VFcFfKx4Y60423v+Ijvs4CH6[m
+[32m+[m[32mJQIDAQAB[m
+ -----END PUBLIC KEY-----[m
+[1mdiff --git a/tests/test_rsa.py b/tests/test_rsa.py[m
+[1mindex 7032356..e6b9326 100644[m
+[1m--- a/tests/test_rsa.py[m
+[1m+++ b/tests/test_rsa.py[m
+[36m@@ -1,9 +1,31 @@[m
+ import sys[m
+ import os[m
+ [m
+[31m-# Add the project root to sys.path so 'core' module is found[m
+[32m+[m
+ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))[m
+[31m-from core import rsa_module  # Make sure core/ is a module (has __init__.py)[m
+[32m+[m[32mfrom core import rsa_module[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_rsa_key_generation():[m
+[32m+[m[32m    private_key, public_key = rsa_module.generate_rsa_keypair()[m
+[32m+[m[32m    rsa_module.save_private_key(private_key, "test_private.pem")[m
+[32m+[m[32m    rsa_module.save_public_key(public_key, "test_public.pem")[m
+[32m+[m[32m    assert os.path.exists("test_private.pem") and os.path.exists("test_public.pem")[m
+[32m+[m[32m    print("✅ RSA key generation and saving test passed.")[m
+[32m+[m
+[32m+[m[32mdef test_rsa_aes_key_encryption_decryption():[m
+[32m+[m[32m    aes_key = os.urandom(32)[m
+[32m+[m
+[32m+[m[32m    public_key = rsa_module.load_public_key("test_public.pem")[m
+[32m+[m[32m    encrypted_key = rsa_module.encrypt_aes_key(aes_key, public_key)[m
+[32m+[m
+[32m+[m[32m    private_key = rsa_module.load_private_key("test_private.pem")[m
+[32m+[m[32m    decrypted_key = rsa_module.decrypt_aes_key(encrypted_key, private_key)[m
+ [m
+[31m-# Add your test function below here and use "python tests/test_rsa.py" to run the test[m
+[32m+[m[32m    assert aes_key == decrypted_key[m
+[32m+[m[32m    print("✅ RSA-based AES key encryption/decryption test passed.")[m
+ [m
+[32m+[m[32mif __name__ == "__main__":[m
+[32m+[m[32m    print("🔍 Running RSA tests...\n")[m
+[32m+[m[32m    test_rsa_key_generation()[m
+[32m+[m[32m    test_rsa_aes_key_encryption_decryption()[m
