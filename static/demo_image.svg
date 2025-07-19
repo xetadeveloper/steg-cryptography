@@ -1,0 +1,117 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d3748;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4a5568;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4299e1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3182ce;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="lockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#48bb78;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38a169;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#backgroundGradient)"/>
+  
+  <!-- Grid Pattern -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#68d391" stroke-width="0.5" opacity="0.1"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#grid)"/>
+  
+  <!-- Main Shield Icon -->
+  <g transform="translate(300, 150)">
+    <!-- Shield Background -->
+    <path d="M100 0 C140 0 180 20 200 60 L200 160 C200 220 150 280 100 300 C50 280 0 220 0 160 L0 60 C20 20 60 0 100 0 Z" 
+          fill="url(#shieldGradient)" stroke="#2b6cb0" stroke-width="3"/>
+    
+    <!-- Lock Icon in Shield -->
+    <g transform="translate(70, 80)">
+      <!-- Lock Body -->
+      <rect x="10" y="25" width="40" height="30" rx="5" fill="url(#lockGradient)"/>
+      
+      <!-- Lock Shackle -->
+      <path d="M20 25 L20 15 C20 8 25 3 30 3 C35 3 40 8 40 15 L40 25" 
+            fill="none" stroke="#38a169" stroke-width="4" stroke-linecap="round"/>
+      
+      <!-- Keyhole -->
+      <circle cx="30" cy="37" r="3" fill="#2d3748"/>
+      <rect x="28" y="37" width="4" height="8" fill="#2d3748"/>
+    </g>
+    
+    <!-- Shield Decorations -->
+    <circle cx="100" cy="120" r="8" fill="#63b3ed" opacity="0.6"/>
+    <circle cx="80" cy="140" r="5" fill="#63b3ed" opacity="0.4"/>
+    <circle cx="120" cy="140" r="5" fill="#63b3ed" opacity="0.4"/>
+  </g>
+  
+  <!-- Title Text -->
+  <text x="400" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#e2e8f0">
+    Cryptographic Steganography
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="400" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#a0aec0">
+    Demo Image for Testing
+  </text>
+  
+  <!-- Feature Icons -->
+  <g transform="translate(100, 380)">
+    <!-- AES Icon -->
+    <g>
+      <circle cx="50" cy="50" r="35" fill="#4a5568" stroke="#68d391" stroke-width="2"/>
+      <text x="50" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#68d391">AES</text>
+      <text x="50" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#68d391">256</text>
+      <text x="50" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#e2e8f0">Encryption</text>
+    </g>
+    
+    <!-- RSA Icon -->
+    <g transform="translate(150, 0)">
+      <circle cx="50" cy="50" r="35" fill="#4a5568" stroke="#4299e1" stroke-width="2"/>
+      <text x="50" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#4299e1">RSA</text>
+      <text x="50" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#4299e1">2048</text>
+      <text x="50" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#e2e8f0">Key Exchange</text>
+    </g>
+    
+    <!-- HMAC Icon -->
+    <g transform="translate(300, 0)">
+      <circle cx="50" cy="50" r="35" fill="#4a5568" stroke="#ed8936" stroke-width="2"/>
+      <text x="50" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#ed8936">HMAC</text>
+      <text x="50" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#ed8936">SHA256</text>
+      <text x="50" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#e2e8f0">Integrity</text>
+    </g>
+    
+    <!-- Steganography Icon -->
+    <g transform="translate(450, 0)">
+      <circle cx="50" cy="50" r="35" fill="#4a5568" stroke="#9f7aea" stroke-width="2"/>
+      <text x="50" y="43" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#9f7aea">STEGO</text>
+      <text x="50" y="57" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#9f7aea">LSB</text>
+      <text x="50" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#e2e8f0">Hiding</text>
+    </g>
+  </g>
+  
+  <!-- Binary Pattern Decoration -->
+  <g opacity="0.1">
+    <text x="50" y="200" font-family="monospace" font-size="10" fill="#68d391">01001000 01100101 01101100 01101100 01101111</text>
+    <text x="50" y="220" font-family="monospace" font-size="10" fill="#68d391">01010111 01101111 01110010 01101100 01100100</text>
+    <text x="550" y="200" font-family="monospace" font-size="10" fill="#4299e1">11000011 10101010 11110000 01010101</text>
+    <text x="550" y="220" font-family="monospace" font-size="10" fill="#4299e1">00110011 11001100 10101010 01010101</text>
+  </g>
+  
+  <!-- Bottom Info -->
+  <text x="400" y="550" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#a0aec0">
+    This image can be used to test the steganography functionality
+  </text>
+  
+  <text x="400" y="570" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#718096">
+    Size: 800x600 pixels • Capacity: ~180,000 characters
+  </text>
+</svg>
