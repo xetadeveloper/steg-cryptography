@@ -1,174 +1,145 @@
-"""
-RSA Keypair Generation and Encryption/Decryption Module
+# rsa_utils.py
 
-This module provides RSA key generation, encryption, and decryption functionality
-using the cryptography library with OAEP padding.
-"""
+# from cryptography.hazmat.primitives.asymmetric import rsa, padding
+# from cryptography.hazmat.primitives import serialization, hashes
+
+# Generate RSA Key Pair
+# def generate_rsa_keypair():
+#     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+#     public_key = private_key.public_key()
+#     return private_key, public_key
 
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization, hashes
 
-def generate_rsa_keypair(key_size=2048):
+
+def generate_rsa_keypair():
+    private_key = rsa.generate_private_key(public_exponent=65537,
+                                           key_size=2048)
+    public_key = private_key.public_key()
+    return private_key, public_key
+
+
+# Save private key to a file
+def save_private_key(private_key, filename):
+    with open(filename, "wb") as f:
+        f.write(
+            private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()))
+
+
+# Save public key to a file
+def save_public_key(public_key, filename):
+    with open(filename, "wb") as f:
+        f.write(
+            public_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo))
+
+
+# Load public key from a file
+def load_public_key(filename):
+    with open(filename, "rb") as f:
+        return serialization.load_pem_public_key(f.read())
+
+
+# Load private key from a file
+def load_private_key(filename):
+    with open(filename, "rb") as f:
+        return serialization.load_pem_private_key(f.read(), password=None)
+
+
+# Encrypt AES key using the recipient's public RSA key
+def encrypt_aes_key(aes_key, public_key):
+    encrypted_aes_key = public_key.encrypt(
+        aes_key,
+        padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                     algorithm=hashes.SHA256(),
+                     label=None))
+    return encrypted_aes_key
+
+
+# Decrypt AES key using the private RSA key
+def decrypt_aes_key(encrypted_key, private_key):
+    decrypted_aes_key = private_key.decrypt(
+        encrypted_key,
+        padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                     algorithm=hashes.SHA256(),
+                     label=None))
+    return decrypted_aes_key
+
+
+def rsa_encrypt(data, public_key_pem):
     """
-    Generate an RSA key pair.
+    Encrypt data using RSA public key.
     
     Args:
-        key_size (int): Size of the RSA key in bits (default: 2048)
+        data (bytes): Data to encrypt
+        public_key_pem (str): PEM-encoded public key
     
     Returns:
-        tuple: (private_key_pem, public_key_pem) as strings
+        bytes: Encrypted data
     """
-    # Generate private key
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=key_size,
-        backend=default_backend()
-    )
+    public_key = serialization.load_pem_public_key(public_key_pem.encode())
+    return encrypt_aes_key(data, public_key)
+
+
+def rsa_decrypt(encrypted_data, private_key_pem):
+    """
+    Decrypt data using RSA private key.
     
-    # Get public key
+    Args:
+        encrypted_data (bytes): Data to decrypt
+        private_key_pem (str): PEM-encoded private key
+    
+    Returns:
+        bytes: Decrypted data
+    """
+    private_key = serialization.load_pem_private_key(private_key_pem.encode(), password=None)
+    return decrypt_aes_key(encrypted_data, private_key)
+
+
+def get_public_key_from_private(private_key_pem):
+    """
+    Extract public key from private key.
+    
+    Args:
+        private_key_pem (str): PEM-encoded private key
+    
+    Returns:
+        str: PEM-encoded public key
+    """
+    private_key = serialization.load_pem_private_key(private_key_pem.encode(), password=None)
     public_key = private_key.public_key()
     
-    # Serialize private key to PEM format
-    private_pem = private_key.private_bytes(
+    public_key_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    
+    return public_key_pem.decode('utf-8')
+
+
+def generate_rsa_keypair_pem():
+    """
+    Generate RSA keypair and return as PEM strings.
+    
+    Returns:
+        tuple: (private_key_pem, public_key_pem)
+    """
+    private_key, public_key = generate_rsa_keypair()
+    
+    private_key_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption()
     ).decode('utf-8')
     
-    # Serialize public key to PEM format
-    public_pem = public_key.public_bytes(
+    public_key_pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     ).decode('utf-8')
     
-    return private_pem, public_pem
-
-def load_private_key_from_pem(private_key_pem):
-    """
-    Load an RSA private key from PEM string.
-    
-    Args:
-        private_key_pem (str): Private key in PEM format
-    
-    Returns:
-        RSAPrivateKey: Cryptography library private key object
-    """
-    return serialization.load_pem_private_key(
-        private_key_pem.encode('utf-8'),
-        password=None,
-        backend=default_backend()
-    )
-
-def load_public_key_from_pem(public_key_pem):
-    """
-    Load an RSA public key from PEM string.
-    
-    Args:
-        public_key_pem (str): Public key in PEM format
-    
-    Returns:
-        RSAPublicKey: Cryptography library public key object
-    """
-    return serialization.load_pem_public_key(
-        public_key_pem.encode('utf-8'),
-        backend=default_backend()
-    )
-
-def rsa_encrypt(data, public_key_pem):
-    """
-    Encrypt data using RSA public key with OAEP padding.
-    
-    Args:
-        data (bytes or str): Data to encrypt
-        public_key_pem (str): Public key in PEM format
-    
-    Returns:
-        bytes: Encrypted data
-        
-    Raises:
-        ValueError: If data is too large for RSA key size
-    """
-    if isinstance(data, str):
-        data = data.encode('utf-8')
-    
-    public_key = load_public_key_from_pem(public_key_pem)
-    
-    # Encrypt with OAEP padding
-    ciphertext = public_key.encrypt(
-        data,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
-    
-    return ciphertext
-
-def rsa_decrypt(ciphertext, private_key_pem):
-    """
-    Decrypt data using RSA private key with OAEP padding.
-    
-    Args:
-        ciphertext (bytes): Encrypted data
-        private_key_pem (str): Private key in PEM format
-    
-    Returns:
-        bytes: Decrypted data
-        
-    Raises:
-        ValueError: If decryption fails
-    """
-    private_key = load_private_key_from_pem(private_key_pem)
-    
-    # Decrypt with OAEP padding
-    plaintext = private_key.decrypt(
-        ciphertext,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
-    
-    return plaintext
-
-def get_public_key_from_private(private_key_pem):
-    """
-    Extract the public key from a private key PEM.
-    
-    Args:
-        private_key_pem (str): Private key in PEM format
-    
-    Returns:
-        str: Public key in PEM format
-    """
-    private_key = load_private_key_from_pem(private_key_pem)
-    public_key = private_key.public_key()
-    
-    public_pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ).decode('utf-8')
-    
-    return public_pem
-
-def get_key_size(key_pem):
-    """
-    Get the size of an RSA key in bits.
-    
-    Args:
-        key_pem (str): RSA key in PEM format (public or private)
-    
-    Returns:
-        int: Key size in bits
-    """
-    try:
-        # Try as private key first
-        key = load_private_key_from_pem(key_pem)
-        return key.key_size
-    except:
-        # Try as public key
-        key = load_public_key_from_pem(key_pem)
-        return key.key_size
+    return private_key_pem, public_key_pem

@@ -14,3 +14,10 @@ import os
 
 # Add the project root to the Python path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from . import test_aes
+from . import test_rsa
+from . import test_hmac
+from . import test_stego
+from . import test_encrypt
+from . import test_decrypt

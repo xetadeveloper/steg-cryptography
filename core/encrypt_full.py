@@ -12,7 +12,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.aes_module import generate_aes_key, aes_encrypt
-from core.rsa_module import generate_rsa_keypair, rsa_encrypt, get_public_key_from_private
+from core.rsa_module import generate_rsa_keypair_pem, rsa_encrypt, get_public_key_from_private
 from core.hmac_module import generate_hmac
 from core.stego_module import encode_message_in_image
 
@@ -51,7 +51,7 @@ def encrypt_full_pipeline(message, image_data, rsa_public_key_pem=None, hmac_key
         
         if rsa_public_key_pem is None:
             # Generate new RSA keypair
-            rsa_private_key_pem, rsa_public_key_pem = generate_rsa_keypair()
+            rsa_private_key_pem, rsa_public_key_pem = generate_rsa_keypair_pem()
         else:
             # If only public key provided, we can't decrypt later without private key
             # This is intentional for scenarios where you only have recipient's public key
