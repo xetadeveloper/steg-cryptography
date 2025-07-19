@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Inbox - Secure Messaging{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <h2>
+                    <i data-feather="inbox" class="me-2"></i>
+                    Inbox
+                </h2>
+                <div>
+                    <a href="{{ url_for('main.compose') }}" class="btn btn-primary me-2">
+                        <i data-feather="edit-3" class="me-2"></i>
+                        Compose
+                    </a>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                        <i data-feather="arrow-left" class="me-2"></i>
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Inbox Content -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i data-feather="mail" class="me-2"></i>
+                        Received Messages
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" id="refreshBtn">
+                            <i data-feather="refresh-cw" class="me-1"></i>
+                            Refresh
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown">
+                                <i data-feather="filter" class="me-1"></i>
+                                Filter
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" data-filter="all">All Messages</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="unread">Unread Only</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="steganographic">Steganographic</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if messages %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="50">Status</th>
+                                        <th width="150">From</th>
+                                        <th>Subject</th>
+                                        <th width="100">Type</th>
+                                        <th width="150">Date</th>
+                                        <th width="100">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for message in messages %}
+                                        <tr class="{% if not message.is_read %}table-info{% endif %}">
+                                            <td>
+                                                {% if not message.is_read %}
+                                                    <i data-feather="circle" class="text-primary" title="Unread"></i>
+                                                {% else %}
+                                                    <i data-feather="check-circle" class="text-muted" title="Read"></i>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <strong>{{ message.get_sender().display_name }}</strong>
+                                                <br>
+                                                <small class="text-muted">@{{ message.get_sender().username }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span>{{ message.subject or 'No subject' }}</span>
+                                                    {% if message.is_steganographic() %}
+                                                        <i data-feather="image" class="ms-2 text-info" title="Steganographic message"></i>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if message.is_steganographic() %}
+                                                    <span class="badge bg-info">Steganographic</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Encrypted</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span title="{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">
+                                                    {{ message.timestamp.strftime('%m/%d %H:%M') }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ url_for('main.view_message', message_id=message.id) }}" 
+                                                       class="btn btn-outline-primary" title="View/Decrypt">
+                                                        <i data-feather="eye"></i>
+                                                    </a>
+                                                    <button class="btn btn-outline-danger" title="Delete" 
+                                                            onclick="deleteMessage('{{ message.id }}')">
+                                                        <i data-feather="trash-2"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i data-feather="inbox" class="text-muted mb-3" style="width: 4rem; height: 4rem;"></i>
+                            <h5 class="text-muted">No messages in your inbox</h5>
+                            <p class="text-muted">When someone sends you an encrypted message, it will appear here.</p>
+                            <a href="{{ url_for('main.compose') }}" class="btn btn-primary">
+                                <i data-feather="edit-3" class="me-2"></i>
+                                Send your first message
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Inbox Statistics -->
+            {% if messages %}
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <i data-feather="mail" class="text-primary mb-2"></i>
+                                <h6>Total Messages</h6>
+                                <h4>{{ messages|length }}</h4>
+                            </div>
+                            <div class="col-md-3">
+                                <i data-feather="circle" class="text-info mb-2"></i>
+                                <h6>Unread</h6>
+                                <h4>{{ messages|selectattr('is_read', 'false')|list|length }}</h4>
+                            </div>
+                            <div class="col-md-3">
+                                <i data-feather="image" class="text-warning mb-2"></i>
+                                <h6>Steganographic</h6>
+                                <h4>{{ messages|selectattr('message_type', 'equalto', 'steganographic')|list|length }}</h4>
+                            </div>
+                            <div class="col-md-3">
+                                <i data-feather="shield" class="text-success mb-2"></i>
+                                <h6>Encrypted</h6>
+                                <h4>{{ messages|length }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize Feather icons
+feather.replace();
+
+// Refresh button handler
+document.getElementById('refreshBtn').addEventListener('click', function() {
+    const btn = this;
+    const icon = btn.querySelector('[data-feather="refresh-cw"]');
+    
+    btn.disabled = true;
+    icon.style.animation = 'spin 1s linear infinite';
+    
+    // Simulate refresh (reload page in real implementation)
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+});
+
+// Filter handlers
+document.querySelectorAll('[data-filter]').forEach(filter => {
+    filter.addEventListener('click', function(e) {
+        e.preventDefault();
+        const filterType = this.dataset.filter;
+        
+        // In a real implementation, this would filter the table rows
+        // For now, just show the filter being applied
+        const filterBtn = document.querySelector('.dropdown-toggle');
+        filterBtn.innerHTML = `<i data-feather="filter" class="me-1"></i>${this.textContent}`;
+        feather.replace();
+        
+        // Demo filter logic (in real app, this would be server-side)
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            row.style.display = 'table-row'; // Show all for demo
+        });
+    });
+});
+
+// Delete message function
+function deleteMessage(messageId) {
+    if (confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
+        // In real implementation, this would make an API call
+        alert('Message deleted successfully! (Demo mode)');
+        // Remove the row from the table for demo
+        event.target.closest('tr').remove();
+    }
+}
+
+// Mark all as read functionality
+function markAllAsRead() {
+    if (confirm('Mark all messages as read?')) {
+        // In real implementation, this would make an API call
+        const unreadIcons = document.querySelectorAll('[data-feather="circle"]');
+        unreadIcons.forEach(icon => {
+            icon.setAttribute('data-feather', 'check-circle');
+            icon.classList.remove('text-primary');
+            icon.classList.add('text-muted');
+        });
+        
+        // Remove unread highlighting
+        document.querySelectorAll('.table-info').forEach(row => {
+            row.classList.remove('table-info');
+        });
+        
+        feather.replace();
+        alert('All messages marked as read! (Demo mode)');
+    }
+}
+
+// Auto-refresh every 30 seconds (optional)
+setInterval(() => {
+    // In a real app, this would check for new messages
+    console.log('Checking for new messages...');
+}, 30000);
+</script>
+{% endblock %}

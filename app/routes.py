@@ -2,7 +2,9 @@ import os
 import sys
 import json
 import base64
-from flask import Blueprint, render_template, request, jsonify, send_file
+from flask import Blueprint, render_template, request, jsonify, send_file, flash, redirect, url_for
+from flask_login import login_required, current_user
+from datetime import datetime
 from werkzeug.utils import secure_filename
 from PIL import Image
 import io
@@ -15,10 +17,124 @@ from core.decrypt_full import decrypt_full_pipeline
 
 main = Blueprint('main', __name__)
 
+# Temporary in-memory storage for development (replace with MongoDB later)
+users_db = {}
+messages_db = {}
+message_counter = 1
+
+class TempUser:
+    def __init__(self, username, email, display_name):
+        self.id = username  # Simple ID for now
+        self.username = username
+        self.email = email
+        self.display_name = display_name
+        self.is_online = True
+        
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'display_name': self.display_name,
+            'is_online': self.is_online
+        }
+
 @main.route('/')
 def index():
-    """Main page with encryption/decryption interface"""
+    """Landing page - redirect to dashboard if logged in."""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
     return render_template('index.html')
+
+@main.route('/dashboard')
+@login_required
+def dashboard():
+    """User dashboard with overview and recent messages."""
+    # Mock data for development
+    recent_messages = []
+    unread_count = 0
+    sent_count = 0
+    stego_count = 0
+    
+    # Create some demo users for online status
+    online_users = [
+        TempUser('alice', 'alice@example.com', 'Alice Smith'),
+        TempUser('bob', 'bob@example.com', 'Bob Johnson'),
+        TempUser('charlie', 'charlie@example.com', 'Charlie Brown')
+    ]
+    
+    return render_template('messaging/dashboard.html',
+                         recent_messages=recent_messages,
+                         unread_count=unread_count,
+                         sent_count=sent_count,
+                         stego_count=stego_count,
+                         online_users=online_users)
+
+@main.route('/update_status', methods=['POST'])
+@login_required
+def update_status():
+    """Update user's online status."""
+    return {'status': 'updated'}
+
+@main.route('/compose')
+@login_required
+def compose():
+    """Message composition page."""
+    recipient_username = request.args.get('recipient')
+    message_type = request.args.get('type', 'text')
+    
+    # Mock users for development
+    users = [
+        TempUser('alice', 'alice@example.com', 'Alice Smith'),
+        TempUser('bob', 'bob@example.com', 'Bob Johnson'),
+        TempUser('charlie', 'charlie@example.com', 'Charlie Brown')
+    ]
+    
+    return render_template('messaging/compose.html',
+                         users=users,
+                         recipient_username=recipient_username,
+                         message_type=message_type)
+
+@main.route('/inbox')
+@login_required
+def inbox():
+    """User inbox with all received messages."""
+    messages = []  # Empty for now
+    return render_template('messaging/inbox.html', messages=messages)
+
+@main.route('/sent')
+@login_required
+def sent():
+    """User sent messages."""
+    messages = []  # Empty for now
+    return render_template('messaging/sent.html', messages=messages)
+
+@main.route('/message/<message_id>')
+@login_required
+def view_message(message_id):
+    """View and decrypt a specific message."""
+    # Mock message for development
+    class MockMessage:
+        def __init__(self):
+            self.id = message_id
+            self.subject = "Demo Encrypted Message"
+            self.timestamp = datetime.now()
+            self.is_read = False
+            self.encrypted_aes_key = "dGVzdF9lbmNyeXB0ZWRfa2V5"  # Base64 encoded demo
+            self.hmac_signature = "dGVzdF9obWFjX3NpZ25hdHVyZQ=="  # Base64 encoded demo
+            self.message_type = "text"
+            self.stego_image_data = None
+            
+        def get_sender(self):
+            return TempUser('alice', 'alice@example.com', 'Alice Smith')
+            
+        def is_steganographic(self):
+            return self.message_type == 'steganographic'
+            
+        def mark_as_read(self):
+            self.is_read = True
+    
+    message = MockMessage()
+    return render_template('messaging/view_message.html', message=message)
 
 @main.route('/api/encrypt', methods=['POST'])
 def encrypt_data():

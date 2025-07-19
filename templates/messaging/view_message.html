@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}View Message - Secure Messaging{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <h2>
+                    <i data-feather="mail" class="me-2"></i>
+                    Message Details
+                </h2>
+                <div>
+                    <a href="{{ url_for('main.inbox') }}" class="btn btn-outline-secondary">
+                        <i data-feather="arrow-left" class="me-2"></i>
+                        Back to Inbox
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Content -->
+    <div class="row">
+        <div class="col-12">
+            <!-- Message Header -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-1">{{ message.subject or 'No subject' }}</h5>
+                            <div class="text-muted">
+                                <strong>From:</strong> {{ message.get_sender().display_name }} (@{{ message.get_sender().username }})
+                                <br>
+                                <strong>Date:</strong> {{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                                <br>
+                                <strong>Type:</strong> 
+                                {% if message.is_steganographic() %}
+                                    <span class="badge bg-info">Steganographic</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Encrypted Text</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            {% if not message.is_read %}
+                                <span class="badge bg-primary">Unread</span>
+                            {% else %}
+                                <span class="badge bg-success">Read</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decryption Interface -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="unlock" class="me-2"></i>
+                        Decrypt Message
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="decryptForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- RSA Private Key -->
+                                <div class="mb-3">
+                                    <label for="private_key" class="form-label">Your RSA Private Key *</label>
+                                    <textarea class="form-control" id="private_key" name="private_key" rows="8" 
+                                              placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" required></textarea>
+                                    <div class="form-text">
+                                        Enter your private RSA key to decrypt the AES key.
+                                    </div>
+                                </div>
+
+                                <!-- HMAC Key -->
+                                <div class="mb-3">
+                                    <label for="hmac_key" class="form-label">HMAC Key *</label>
+                                    <input type="text" class="form-control" id="hmac_key" name="hmac_key" 
+                                           value="default_hmac_key" placeholder="Enter HMAC key" required>
+                                    <div class="form-text">
+                                        The HMAC key used to verify message integrity.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <!-- Steganographic Image (if applicable) -->
+                                {% if message.is_steganographic() %}
+                                    <div class="mb-3">
+                                        <label class="form-label">Steganographic Image</label>
+                                        <div class="border rounded p-3 text-center">
+                                            <img src="data:image/png;base64,{{ message.stego_image_data|b64encode }}" 
+                                                 class="img-fluid" style="max-height: 200px;" 
+                                                 alt="Steganographic Image">
+                                            <div class="mt-2">
+                                                <small class="text-muted">
+                                                    This image contains your encrypted message.
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <!-- Encrypted Data Info -->
+                                <div class="mb-3">
+                                    <label class="form-label">Encryption Details</label>
+                                    <div class="border rounded p-3">
+                                        <small class="text-muted">
+                                            <strong>Encrypted AES Key:</strong><br>
+                                            <code>{{ message.encrypted_aes_key[:50] }}...</code><br><br>
+                                            <strong>HMAC Signature:</strong><br>
+                                            <code>{{ message.hmac_signature[:50] }}...</code>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i data-feather="unlock" class="me-2"></i>
+                                Decrypt Message
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Decrypted Message Display -->
+            <div id="decryptedResult" class="card mt-4" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i data-feather="check-circle" class="me-2"></i>
+                        Decrypted Message
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Original Message</label>
+                        <div class="border rounded p-3" style="background-color: #f8f9fa;">
+                            <div id="decryptedText" style="white-space: pre-wrap; font-family: monospace;"></div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info d-flex align-items-center">
+                        <i data-feather="shield" class="me-2"></i>
+                        <div>
+                            <strong>Security Status:</strong>
+                            <span id="hmacStatus" class="badge bg-success ms-2">HMAC Verified</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary" onclick="copyToClipboard()">
+                            <i data-feather="copy" class="me-2"></i>
+                            Copy Message
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="replyToMessage()">
+                            <i data-feather="reply" class="me-2"></i>
+                            Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Display -->
+            <div id="decryptError" class="card mt-4" style="display: none;">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i data-feather="alert-triangle" class="me-2"></i>
+                        Decryption Failed
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <div id="errorMessage"></div>
+                    </div>
+                    <p>Please check that you have entered the correct private key and HMAC key.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize Feather icons
+feather.replace();
+
+let decryptedMessageText = '';
+
+// Form submission handler
+document.getElementById('decryptForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const privateKey = document.getElementById('private_key').value;
+    const hmacKey = document.getElementById('hmac_key').value;
+    
+    if (!privateKey || !hmacKey) {
+        alert('Please enter both your private key and HMAC key.');
+        return;
+    }
+    
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalContent = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Decrypting...';
+    
+    // Hide previous results
+    document.getElementById('decryptedResult').style.display = 'none';
+    document.getElementById('decryptError').style.display = 'none';
+    
+    // Create FormData for the API call
+    const formData = new FormData();
+    formData.append('rsa_private_key', privateKey);
+    formData.append('hmac_key', hmacKey);
+    formData.append('encrypted_aes_key', '{{ message.encrypted_aes_key }}');
+    formData.append('hmac_signature', '{{ message.hmac_signature }}');
+    
+    {% if message.is_steganographic() %}
+        // For steganographic messages, we need to convert the base64 image back to a file
+        const imageData = '{{ message.stego_image_data|b64encode }}';
+        const binaryString = atob(imageData);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        const imageFile = new Blob([bytes], { type: 'image/png' });
+        formData.append('stego_image', imageFile, 'stego_image.png');
+    {% endif %}
+    
+    fetch('{{ url_for("main.decrypt_data") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show decrypted message
+            decryptedMessageText = data.decrypted_message;
+            document.getElementById('decryptedText').textContent = data.decrypted_message;
+            
+            // Update HMAC status
+            const hmacStatus = document.getElementById('hmacStatus');
+            if (data.hmac_verified) {
+                hmacStatus.className = 'badge bg-success ms-2';
+                hmacStatus.textContent = 'HMAC Verified ✓';
+            } else {
+                hmacStatus.className = 'badge bg-warning ms-2';
+                hmacStatus.textContent = 'HMAC Warning ⚠';
+            }
+            
+            document.getElementById('decryptedResult').style.display = 'block';
+        } else {
+            // Show error
+            document.getElementById('errorMessage').textContent = data.error;
+            document.getElementById('decryptError').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('errorMessage').textContent = 'Network error: ' + error.message;
+        document.getElementById('decryptError').style.display = 'block';
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalContent;
+        feather.replace();
+    });
+});
+
+// Copy to clipboard function
+function copyToClipboard() {
+    if (decryptedMessageText) {
+        navigator.clipboard.writeText(decryptedMessageText).then(() => {
+            alert('Message copied to clipboard!');
+        }).catch(err => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = decryptedMessageText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Message copied to clipboard!');
+        });
+    }
+}
+
+// Reply to message function
+function replyToMessage() {
+    const senderUsername = '{{ message.get_sender().username }}';
+    const originalSubject = '{{ message.subject or "" }}';
+    const replySubject = originalSubject.startsWith('Re:') ? originalSubject : 'Re: ' + originalSubject;
+    
+    const composeUrl = new URL('{{ url_for("main.compose") }}', window.location.origin);
+    composeUrl.searchParams.set('recipient', senderUsername);
+    composeUrl.searchParams.set('subject', replySubject);
+    
+    window.location.href = composeUrl.toString();
+}
+
+// Auto-focus on private key field
+document.getElementById('private_key').focus();
+</script>
+{% endblock %}

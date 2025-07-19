@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Sent Messages - Secure Messaging{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <h2>
+                    <i data-feather="send" class="me-2"></i>
+                    Sent Messages
+                </h2>
+                <div>
+                    <a href="{{ url_for('main.compose') }}" class="btn btn-primary me-2">
+                        <i data-feather="edit-3" class="me-2"></i>
+                        Compose
+                    </a>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                        <i data-feather="arrow-left" class="me-2"></i>
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sent Messages Content -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="archive" class="me-2"></i>
+                        Your Sent Messages
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if messages %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="150">To</th>
+                                        <th>Subject</th>
+                                        <th width="100">Type</th>
+                                        <th width="100">Status</th>
+                                        <th width="150">Date</th>
+                                        <th width="100">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for message in messages %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ message.get_recipient().display_name }}</strong>
+                                                <br>
+                                                <small class="text-muted">@{{ message.get_recipient().username }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span>{{ message.subject or 'No subject' }}</span>
+                                                    {% if message.is_steganographic() %}
+                                                        <i data-feather="image" class="ms-2 text-info" title="Steganographic message"></i>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if message.is_steganographic() %}
+                                                    <span class="badge bg-info">Steganographic</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Encrypted</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if message.delivery_status == 'read' %}
+                                                    <span class="badge bg-success">Read</span>
+                                                {% elif message.delivery_status == 'delivered' %}
+                                                    <span class="badge bg-primary">Delivered</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Sent</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span title="{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">
+                                                    {{ message.timestamp.strftime('%m/%d %H:%M') }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ url_for('main.view_message', message_id=message.id) }}" 
+                                                       class="btn btn-outline-primary" title="View">
+                                                        <i data-feather="eye"></i>
+                                                    </a>
+                                                    <button class="btn btn-outline-danger" title="Delete" 
+                                                            onclick="deleteMessage('{{ message.id }}')">
+                                                        <i data-feather="trash-2"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i data-feather="send" class="text-muted mb-3" style="width: 4rem; height: 4rem;"></i>
+                            <h5 class="text-muted">No sent messages</h5>
+                            <p class="text-muted">Messages you send will appear here.</p>
+                            <a href="{{ url_for('main.compose') }}" class="btn btn-primary">
+                                <i data-feather="edit-3" class="me-2"></i>
+                                Send your first message
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize Feather icons
+feather.replace();
+
+// Delete message function
+function deleteMessage(messageId) {
+    if (confirm('Are you sure you want to delete this sent message? This action cannot be undone.')) {
+        // In real implementation, this would make an API call
+        alert('Message deleted successfully! (Demo mode)');
+        // Remove the row from the table for demo
+        event.target.closest('tr').remove();
+    }
+}
+</script>
+{% endblock %}

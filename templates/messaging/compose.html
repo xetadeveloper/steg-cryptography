@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Compose Message - Secure Messaging{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <h2>
+                    <i data-feather="edit-3" class="me-2"></i>
+                    Compose Message
+                </h2>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                    <i data-feather="arrow-left" class="me-2"></i>
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        {% if message_type == 'steganographic' %}
+                            <i data-feather="image" class="me-2"></i>
+                            Steganographic Message
+                        {% else %}
+                            <i data-feather="message-square" class="me-2"></i>
+                            Encrypted Message
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="composeForm" method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- Recipient Selection -->
+                                <div class="mb-3">
+                                    <label for="recipient" class="form-label">Recipient *</label>
+                                    <select class="form-select" id="recipient" name="recipient" required>
+                                        <option value="">Select a recipient...</option>
+                                        {% for user in users %}
+                                            <option value="{{ user.username }}" 
+                                                {% if recipient_username == user.username %}selected{% endif %}>
+                                                {{ user.display_name }} (@{{ user.username }})
+                                                {% if user.is_online %}
+                                                    <span class="text-success">• Online</span>
+                                                {% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- Subject -->
+                                <div class="mb-3">
+                                    <label for="subject" class="form-label">Subject</label>
+                                    <input type="text" class="form-control" id="subject" name="subject" 
+                                           placeholder="Enter message subject (optional)">
+                                </div>
+
+                                <!-- Message Type -->
+                                <div class="mb-3">
+                                    <label for="message_type" class="form-label">Message Type</label>
+                                    <select class="form-select" id="message_type" name="message_type">
+                                        <option value="text" {% if message_type == 'text' %}selected{% endif %}>
+                                            Encrypted Text Only
+                                        </option>
+                                        <option value="steganographic" {% if message_type == 'steganographic' %}selected{% endif %}>
+                                            Steganographic (Hidden in Image)
+                                        </option>
+                                    </select>
+                                    <div class="form-text">
+                                        Steganographic messages are hidden within images for additional security.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <!-- Message Content -->
+                                <div class="mb-3">
+                                    <label for="message" class="form-label">Message Content *</label>
+                                    <textarea class="form-control" id="message" name="message" rows="6" 
+                                              placeholder="Enter your secret message here..." required></textarea>
+                                    <div class="form-text">
+                                        Your message will be encrypted with AES-256 before sending.
+                                    </div>
+                                </div>
+
+                                <!-- Cover Image (for steganographic messages) -->
+                                <div class="mb-3" id="coverImageSection" style="display: {% if message_type == 'steganographic' %}block{% else %}none{% endif %};">
+                                    <label for="cover_image" class="form-label">Cover Image *</label>
+                                    <input type="file" class="form-control" id="cover_image" name="cover_image" 
+                                           accept="image/*">
+                                    <div class="form-text">
+                                        Select an image to hide your message in. Larger images work better.
+                                    </div>
+                                </div>
+
+                                <!-- HMAC Key -->
+                                <div class="mb-3">
+                                    <label for="hmac_key" class="form-label">HMAC Key</label>
+                                    <input type="text" class="form-control" id="hmac_key" name="hmac_key" 
+                                           value="default_hmac_key" placeholder="Enter HMAC key for message integrity">
+                                    <div class="form-text">
+                                        Used to verify message integrity. Share this key securely with the recipient.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <button type="button" class="btn btn-outline-secondary me-2" id="previewBtn">
+                                            <i data-feather="eye" class="me-2"></i>
+                                            Preview
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info" id="generateKeysBtn">
+                                            <i data-feather="key" class="me-2"></i>
+                                            Generate RSA Keys
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary me-2">
+                                            Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i data-feather="send" class="me-2"></i>
+                                            Send Message
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i data-feather="shield" class="me-2"></i>
+                        Security Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <i data-feather="lock" class="text-primary mb-2" style="width: 2rem; height: 2rem;"></i>
+                            <h6>AES-256 Encryption</h6>
+                            <small class="text-muted">Your message is encrypted with AES-256-CBC</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <i data-feather="key" class="text-info mb-2" style="width: 2rem; height: 2rem;"></i>
+                            <h6>RSA Key Exchange</h6>
+                            <small class="text-muted">AES key is protected with RSA-2048</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <i data-feather="check-circle" class="text-success mb-2" style="width: 2rem; height: 2rem;"></i>
+                            <h6>HMAC Verification</h6>
+                            <small class="text-muted">Message integrity with HMAC-SHA256</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <i data-feather="image" class="text-warning mb-2" style="width: 2rem; height: 2rem;"></i>
+                            <h6>Steganography</h6>
+                            <small class="text-muted">Optional hiding within images</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize Feather icons
+feather.replace();
+
+// Message type change handler
+document.getElementById('message_type').addEventListener('change', function() {
+    const coverImageSection = document.getElementById('coverImageSection');
+    const coverImageInput = document.getElementById('cover_image');
+    
+    if (this.value === 'steganographic') {
+        coverImageSection.style.display = 'block';
+        coverImageInput.required = true;
+    } else {
+        coverImageSection.style.display = 'none';
+        coverImageInput.required = false;
+        coverImageInput.value = '';
+    }
+});
+
+// Generate RSA keys
+document.getElementById('generateKeysBtn').addEventListener('click', function() {
+    const btn = this;
+    const originalContent = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+    
+    fetch('{{ url_for("main.generate_keys") }}', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show keys in modal or alert (simplified for demo)
+            alert('RSA Keys Generated Successfully!\n\nPublic Key:\n' + data.public_key + '\n\nPrivate Key:\n' + data.private_key);
+        } else {
+            alert('Error generating keys: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+    });
+});
+
+// Form submission handler
+document.getElementById('composeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalContent = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+    
+    // For demo purposes, just show success message
+    setTimeout(() => {
+        alert('Message sent successfully! (Demo mode - MongoDB integration required for full functionality)');
+        window.location.href = '{{ url_for("main.dashboard") }}';
+    }, 2000);
+});
+
+// Preview functionality
+document.getElementById('previewBtn').addEventListener('click', function() {
+    const message = document.getElementById('message').value;
+    const recipient = document.getElementById('recipient').value;
+    const subject = document.getElementById('subject').value;
+    const messageType = document.getElementById('message_type').value;
+    
+    if (!message || !recipient) {
+        alert('Please enter a message and select a recipient first.');
+        return;
+    }
+    
+    const preview = `
+        To: ${recipient}
+        Subject: ${subject || 'No subject'}
+        Type: ${messageType}
+        
+        Message: ${message}
+        
+        This message will be encrypted with AES-256 and ${messageType === 'steganographic' ? 'hidden in an image' : 'sent as encrypted text'}.
+    `;
+    
+    alert(preview);
+});
+</script>
+{% endblock %}
