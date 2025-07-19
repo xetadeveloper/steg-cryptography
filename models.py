@@ -377,20 +377,31 @@ class UserSession:
 # Database initialization and indexes
 def init_db():
     """Initialize database indexes for better performance."""
-    # User indexes
-    mongo.db.users.create_index('username', unique=True)
-    mongo.db.users.create_index('email', unique=True)
-    mongo.db.users.create_index('is_online')
-    
-    # Message indexes
-    mongo.db.messages.create_index([('recipient_id', 1), ('timestamp', -1)])
-    mongo.db.messages.create_index([('sender_id', 1), ('timestamp', -1)])
-    mongo.db.messages.create_index([('recipient_id', 1), ('is_read', 1)])
-    
-    # Login attempt indexes
-    mongo.db.login_attempts.create_index([('username', 1), ('timestamp', -1)])
-    
-    # Session indexes
-    mongo.db.user_sessions.create_index('session_token', unique=True)
-    mongo.db.user_sessions.create_index([('user_id', 1), ('is_active', 1)])
-    mongo.db.user_sessions.create_index('last_activity')
+    try:
+        # Test connection first
+        mongo.db.list_collection_names()
+        
+        # User indexes
+        mongo.db.users.create_index('username', unique=True)
+        mongo.db.users.create_index('email', unique=True)
+        mongo.db.users.create_index('is_online')
+        
+        # Message indexes
+        mongo.db.messages.create_index([('recipient_id', 1), ('timestamp', -1)])
+        mongo.db.messages.create_index([('sender_id', 1), ('timestamp', -1)])
+        mongo.db.messages.create_index([('recipient_id', 1), ('is_read', 1)])
+        
+        # Login attempt indexes
+        mongo.db.login_attempts.create_index([('username', 1), ('timestamp', -1)])
+        
+        # Session indexes
+        mongo.db.user_sessions.create_index('session_token', unique=True)
+        mongo.db.user_sessions.create_index([('user_id', 1), ('is_active', 1)])
+        mongo.db.user_sessions.create_index('last_activity')
+        
+        print("Database indexes created successfully")
+        return True
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+        print("Running in offline mode - database operations will be mocked")
+        return False

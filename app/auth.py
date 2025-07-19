@@ -1,6 +1,27 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from models import User, LoginAttempt, UserSession
+
+# Import models based on database connection status
+try:
+    from models import User, LoginAttempt, UserSession
+except:
+    from models_fallback import User
+    # Fallback classes for development
+    class LoginAttempt:
+        @staticmethod
+        def get_recent_failures(username, hours=1):
+            return 0
+        @staticmethod  
+        def record_attempt(username, success, ip_address=None):
+            pass
+    
+    class UserSession:
+        @staticmethod
+        def create_session(user_id, ip_address=None, user_agent=None):
+            return None
+        @staticmethod
+        def find_by_token(token):
+            return None
 import re
 from datetime import datetime, timezone
 

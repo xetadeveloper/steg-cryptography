@@ -4,8 +4,8 @@ Pillow==10.0.0
 bcrypt
 flask-login
 flask-bcrypt
-flask-pymongo
-pymongo
 werkzeug
 bson
-pymongo
+flask-pymongo
+pymongo[srv]==4.6.0
+certifi

@@ -8,52 +8,58 @@ def create_app():
                 template_folder='../templates',
                 static_folder='../static')
     app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-for-development")
-
-    # MongoDB configuration - will be enabled when MongoDB is available
-    # app.config["MONGO_URI"] = os.environ.get("MONGO_URI", "mongodb://localhost:27017/secure_messaging")
-
-    # Initialize MongoDB when available
-    # from models import mongo, bcrypt, init_db
-    # mongo.init_app(app)
-    # bcrypt.init_app(app)
-
+    
+    # MongoDB Atlas configuration  
+    app.config["MONGO_URI"] = "mongodb+srv://root:VfhIbcEPBS4UShDS@cryptocluster.rl6cnro.mongodb.net/secure_messaging?retryWrites=true&w=majority&appName=CryptoCluster"
+    
+    # Try to initialize MongoDB, fallback to in-memory storage if unavailable
+    try:
+        from models import mongo, bcrypt, init_db
+        mongo.init_app(app)
+        bcrypt.init_app(app)
+        
+        # Test connection
+        with app.app_context():
+            mongo.db.list_collection_names()
+        
+        db_connected = True
+        print("✓ MongoDB Atlas connected successfully")
+    except Exception as e:
+        print(f"✗ MongoDB Atlas connection failed: {e}")
+        print("✓ Using fallback in-memory database for development")
+        # Use fallback models
+        import models_fallback as models
+        from models_fallback import init_db
+        db_connected = False
+    
+    # Store connection status in app config
+    app.config['DB_CONNECTED'] = db_connected
+    
     # Initialize Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
-
+    
     @login_manager.user_loader
     def load_user(user_id):
-        # Temporary user loader for development
-        class MockUser:
-            def __init__(self):
-                self.id = 'dev_user'
-                self.username = 'developer'
-                self.display_name = 'Developer'
-                self.is_authenticated = True
-                self.is_active = True
-                self.is_anonymous = False
-
-            def get_id(self):
-                return self.id
-
-        return MockUser() if user_id == 'dev_user' else None
-
+        if db_connected:
+            from models import User
+        else:
+            from models_fallback import User
+        return User.find_by_id(user_id)
+    
     # Initialize database indexes
-    # Initialize database indexes
-    from models import init_db
-
     with app.app_context():
         init_db()
-
+    
     # Import and register blueprints
     from app.routes import main
     from app.auth import auth
     app.register_blueprint(main)
     app.register_blueprint(auth, url_prefix='/auth')
-
+    
     return app
 
 # Create the app instance
