@@ -88,31 +88,79 @@ def compose():
             flash('Recipient not found.', 'error')
             return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
         
-        # Handle file upload for cover image
-        if 'cover_image' not in request.files:
-            flash('Cover image is required.', 'error')
-            return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+        # Handle image source selection
+        image_source = request.form.get('image_source', 'default')
+        cover_image_data = None
         
-        file = request.files['cover_image']
-        if file.filename == '':
-            flash('No image selected.', 'error')
-            return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
-        
-        if file and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+        if image_source == 'custom':
+            # Use uploaded custom image
+            if 'cover_image' not in request.files:
+                flash('Cover image is required when using custom upload.', 'error')
+                return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+            
+            file = request.files['cover_image']
+            if file.filename == '':
+                flash('No image selected.', 'error')
+                return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+            
+            if file and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                try:
+                    # Read and validate image
+                    image_data = file.read()
+                    image = Image.open(io.BytesIO(image_data))
+                    
+                    # Convert to PNG for consistent steganography
+                    if image.mode != 'RGB':
+                        image = image.convert('RGB')
+                    
+                    img_buffer = io.BytesIO()
+                    image.save(img_buffer, format='PNG')
+                    cover_image_data = img_buffer.getvalue()
+                except Exception as e:
+                    flash(f'Error processing image: {str(e)}', 'error')
+                    return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+            else:
+                flash('Please upload a valid image file (PNG, JPG, JPEG).', 'error')
+                return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+                
+        else:  # image_source == 'default'
+            # Use user's default image
+            if not current_user.default_image_url:
+                flash('You don\'t have a default image set. Please upload a custom image or set a default image in settings.', 'error')
+                return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+            
+            # Download default image from Cloudinary
             try:
-                # Read and validate image
-                image_data = file.read()
-                image = Image.open(io.BytesIO(image_data))
-                
-                # Convert to PNG for consistent steganography
-                if image.mode != 'RGB':
-                    image = image.convert('RGB')
-                
-                img_buffer = io.BytesIO()
-                image.save(img_buffer, format='PNG')
-                image_data = img_buffer.getvalue()
-                
+                import requests
+                response = requests.get(current_user.default_image_url)
+                if response.status_code == 200:
+                    cover_image_data = response.content
+                else:
+                    flash('Error loading your default image. Please try uploading a custom image.', 'error')
+                    return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+            except Exception as e:
+                flash(f'Error downloading default image: {str(e)}', 'error')
+                return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+        
+        if cover_image_data:
+            try:
                 # Use secure messaging pipeline
+                from core.secure_messaging import secure_messaging
+                result = secure_messaging.send_message(
+                    sender_user=current_user,
+                    recipient_user=recipient,
+                    message_text=message,
+                    cover_image_data=cover_image_data
+                )
+                
+                if result['success']:
+                    flash(f'Message sent successfully to {recipient.display_name}!', 'success')
+                    return redirect(url_for('main.dashboard'))
+                else:
+                    flash(f'Failed to send message: {result["error"]}', 'error')
+            
+            except Exception as e:
+                flash(f'Error sending message: {str(e)}', 'error')
                 from core.secure_messaging import secure_messaging
                 result = secure_messaging.send_message(
                     sender_user=current_user,

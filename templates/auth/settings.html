@@ -119,6 +119,57 @@
                 </div>
             </div>
 
+            <!-- Default Steganography Image -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="image" class="me-2"></i>Default Steganography Image
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        Set a default image to use for hiding your messages when composing steganographic messages.
+                    </div>
+                    
+                    {% if current_user.default_image_url %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <img src="{{ current_user.default_image_url }}" alt="Default Image" class="img-fluid rounded" style="max-height: 200px;">
+                                <p class="mt-2 mb-0"><small class="text-muted">Current default image</small></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-danger" onclick="removeDefaultImage()">
+                                    <i data-feather="trash-2" class="me-2"></i>
+                                    Remove Default Image
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('newDefaultImage').click()">
+                                    <i data-feather="upload" class="me-2"></i>
+                                    Replace Default Image
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center">
+                        <p class="text-muted">You haven't set a default image yet.</p>
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('newDefaultImage').click()">
+                            <i data-feather="upload" class="me-2"></i>
+                            Set Default Image
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Hidden file input -->
+                    <form id="defaultImageForm" enctype="multipart/form-data" style="display: none;">
+                        <input type="file" id="newDefaultImage" name="default_image" accept="image/png,image/jpeg,image/jpg" onchange="uploadDefaultImage()">
+                    </form>
+                </div>
+            </div>
+
             <!-- Change Password -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -241,6 +292,52 @@ function confirmAccountDeletion() {
             // Implementation would go here
             alert('Account deletion feature not yet implemented');
         }
+    }
+}
+
+// Default image functions
+function uploadDefaultImage() {
+    const fileInput = document.getElementById('newDefaultImage');
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('default_image', file);
+    
+    fetch('{{ url_for("auth.set_default_image") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error uploading image: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error uploading image: ' + error.message);
+    });
+}
+
+function removeDefaultImage() {
+    if (confirm('Are you sure you want to remove your default image?')) {
+        fetch('{{ url_for("auth.remove_default_image") }}', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error removing image: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error removing image: ' + error.message);
+        });
     }
 }
 

@@ -249,3 +249,56 @@ def online_users():
         'users': [user.to_dict() for user in online_users],
         'count': len(online_users)
     }
+
+@auth.route('/set_default_image', methods=['POST'])
+@login_required
+def set_default_image():
+    """Set user's default steganography image."""
+    try:
+        import time
+        if 'default_image' not in request.files:
+            return jsonify({'success': False, 'error': 'No image file provided'})
+        
+        file = request.files['default_image']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No image selected'})
+        
+        if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            return jsonify({'success': False, 'error': 'Invalid file format. Use PNG, JPG, or JPEG'})
+        
+        # Upload to Cloudinary
+        from core.cloudinary_manager import CloudinaryManager
+        cloudinary_manager = CloudinaryManager()
+        
+        result = cloudinary_manager.upload_image(
+            file.read(),
+            filename=f"default_{current_user.username}_{int(time.time())}"
+        )
+        
+        if result['success']:
+            # Update user's default image
+            current_user.set_default_image(result['url'], result['public_id'])
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': result['error']})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@auth.route('/remove_default_image', methods=['POST'])
+@login_required
+def remove_default_image():
+    """Remove user's default steganography image."""
+    try:
+        if current_user.default_image_cloudinary_id:
+            # Delete from Cloudinary
+            from core.cloudinary_manager import CloudinaryManager
+            cloudinary_manager = CloudinaryManager()
+            cloudinary_manager.delete_image(current_user.default_image_cloudinary_id)
+        
+        # Remove from user record
+        current_user.set_default_image(None, None)
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
