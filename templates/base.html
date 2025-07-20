@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
@@ -115,14 +116,14 @@
                     </nav>
                     <!-- Main content for authenticated users -->
                     <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                        {% block main_content %}{% endblock %}
+                        {% block content %}{% endblock %}
                     </div>
                 </div>
             {% else %}
                 <!-- Full width content for unauthenticated users -->
                 <div class="row">
                     <div class="col-12">
-                        {% block main_content %}{% endblock %}
+                        {% block content %}{% endblock %}
                     </div>
                 </div>
             {% endif %}
