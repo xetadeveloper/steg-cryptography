@@ -97,4 +97,20 @@ The application follows a modular Flask architecture with clear separation betwe
 - **Memory Management**: Secure handling of cryptographic keys and sensitive data
 - **Error Messages**: Careful error handling to prevent information leakage
 
+## Recent Updates (July 2025)
+
+### Steganography-Only Messaging System
+- **Enforced Steganography**: Removed plain encryption option - all messages must be hidden in images
+- **Default Image Support**: Users can set default steganography images stored in Cloudinary
+- **Automatic Key Management**: RSA keys automatically managed from user profiles (no manual input)
+- **Image Preview**: Real-time preview of selected images in compose form
+- **Form Validation**: Required field validation before message submission
+- **Auto-Refresh Inbox**: 1-minute automatic refresh for new messages
+
+### Security Enhancements
+- **Cloudinary Integration**: Secure image storage with API key: 394723544873621
+- **AES+RSA Pipeline**: Signal/WhatsApp-style encryption with automatic key exchange
+- **MongoDB Atlas**: Full database functionality with Alice/Bob test accounts
+- **Session Management**: Secure authentication with automatic RSA key generation
+
 The application is designed to be easily deployable on various platforms while maintaining security best practices and providing a user-friendly interface for cryptographic steganography operations.

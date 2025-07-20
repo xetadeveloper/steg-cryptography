@@ -74,20 +74,15 @@
                                            placeholder="Enter message subject (optional)">
                                 </div>
 
-                                <!-- Message Type -->
+                                <!-- Message Type - Steganography Only -->
                                 <div class="mb-3">
-                                    <label for="message_type" class="form-label">Message Type</label>
-                                    <select class="form-select" id="message_type" name="message_type">
-                                        <option value="text" {% if message_type == 'text' %}selected{% endif %}>
-                                            Encrypted Text Only
-                                        </option>
-                                        <option value="steganographic" {% if message_type == 'steganographic' %}selected{% endif %}>
-                                            Steganographic (Hidden in Image)
-                                        </option>
-                                    </select>
-                                    <div class="form-text">
-                                        Steganographic messages are hidden within images for additional security.
+                                    <label class="form-label">Message Type</label>
+                                    <div class="alert alert-info">
+                                        <i data-feather="shield" class="me-2"></i>
+                                        <strong>Steganographic Messages Only</strong><br>
+                                        All messages are automatically hidden in images for maximum security.
                                     </div>
+                                    <input type="hidden" name="message_type" value="steganographic">
                                 </div>
                             </div>
 
@@ -102,13 +97,41 @@
                                     </div>
                                 </div>
 
-                                <!-- Cover Image (required for all steganographic messages) -->
+                                <!-- Image Selection -->
                                 <div class="mb-3">
-                                    <label for="cover_image" class="form-label">Cover Image *</label>
-                                    <input type="file" class="form-control" id="cover_image" name="cover_image" 
-                                           accept="image/*" required>
-                                    <div class="form-text">
-                                        Select an image to hide your encrypted message in. JPG, PNG formats supported.
+                                    <label class="form-label">Cover Image *</label>
+                                    
+                                    <!-- Default Image Option -->
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="image_source" id="useDefault" value="default" checked>
+                                            <label class="form-check-label" for="useDefault">
+                                                Use My Default Image
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="image_source" id="useCustom" value="custom">
+                                            <label class="form-check-label" for="useCustom">
+                                                Upload Custom Image
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Custom Image Upload -->
+                                    <div id="customImageSection" class="mb-3" style="display: none;">
+                                        <input type="file" class="form-control" id="cover_image" name="cover_image" 
+                                               accept="image/*">
+                                        <div class="form-text">
+                                            Select an image to hide your encrypted message in. JPG, PNG formats supported.
+                                        </div>
+                                    </div>
+
+                                    <!-- Image Preview -->
+                                    <div id="imagePreview" class="mt-3" style="display: none;">
+                                        <label class="form-label">Preview:</label>
+                                        <div class="border rounded p-2 text-center" style="max-height: 300px; overflow: hidden;">
+                                            <img id="previewImg" src="" alt="Image Preview" class="img-fluid" style="max-height: 250px;">
+                                        </div>
                                     </div>
                                 </div>
 
@@ -121,10 +144,7 @@
                             <div class="col-12">
                                 <div class="d-flex justify-content-between">
                                     <div>
-                                        <button type="button" class="btn btn-outline-secondary me-2" id="previewBtn">
-                                            <i data-feather="eye" class="me-2"></i>
-                                            Preview
-                                        </button>
+
                                         <a href="{{ url_for('auth.settings') }}" class="btn btn-outline-info">
                                             <i data-feather="key" class="me-2"></i>
                                             View RSA Keys
@@ -189,70 +209,88 @@
 // Initialize Feather icons
 feather.replace();
 
-// Message type change handler
-document.getElementById('message_type').addEventListener('change', function() {
-    const coverImageSection = document.getElementById('coverImageSection');
-    const coverImageInput = document.getElementById('cover_image');
-    
-    if (this.value === 'steganographic') {
-        coverImageSection.style.display = 'block';
-        coverImageInput.required = true;
+// Image source selection handling
+const useDefaultRadio = document.getElementById('useDefault');
+const useCustomRadio = document.getElementById('useCustom');
+const customImageSection = document.getElementById('customImageSection');
+const imagePreview = document.getElementById('imagePreview');
+const previewImg = document.getElementById('previewImg');
+const coverImageInput = document.getElementById('cover_image');
+
+// Show/hide custom image section based on selection
+function toggleImageSource() {
+    if (useCustomRadio.checked) {
+        customImageSection.style.display = 'block';
+        // Show default image preview if user has one
+        {% if current_user.default_image_url %}
+        previewImg.src = '';
+        imagePreview.style.display = 'none';
+        {% endif %}
     } else {
-        coverImageSection.style.display = 'none';
-        coverImageInput.required = false;
-        coverImageInput.value = '';
+        customImageSection.style.display = 'none';
+        // Show user's default image if they have one
+        {% if current_user.default_image_url %}
+        previewImg.src = '{{ current_user.default_image_url }}';
+        imagePreview.style.display = 'block';
+        {% else %}
+        imagePreview.style.display = 'none';
+        {% endif %}
+    }
+}
+
+// Initialize on page load
+toggleImageSource();
+
+useDefaultRadio.addEventListener('change', toggleImageSource);
+useCustomRadio.addEventListener('change', toggleImageSource);
+
+// Image preview for custom uploads
+coverImageInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        imagePreview.style.display = 'none';
     }
 });
 
-// Generate RSA keys
-document.getElementById('generateKeysBtn').addEventListener('click', function() {
-    const btn = this;
-    const originalContent = btn.innerHTML;
-    
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
-    
-    fetch('{{ url_for("main.generate_keys") }}', {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Show keys in modal or alert (simplified for demo)
-            alert('RSA Keys Generated Successfully!\n\nPublic Key:\n' + data.public_key + '\n\nPrivate Key:\n' + data.private_key);
-        } else {
-            alert('Error generating keys: ' + data.error);
-        }
-    })
-    .catch(error => {
-        alert('Error: ' + error.message);
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = originalContent;
-    });
-});
-
-// Form submission handler
+// Form validation and submission
 document.getElementById('composeForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+    const recipient = document.getElementById('recipient').value;
+    const message = document.getElementById('message').value;
     
-    const formData = new FormData(this);
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalContent = submitBtn.innerHTML;
+    if (!recipient) {
+        e.preventDefault();
+        alert('Please select a recipient.');
+        return;
+    }
     
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+    if (!message.trim()) {
+        e.preventDefault();
+        alert('Please enter a message.');
+        return;
+    }
     
-    // For demo purposes, just show success message
-    setTimeout(() => {
-        alert('Message sent successfully!');
-        window.location.href = '{{ url_for("main.dashboard") }}';
-    }, 2000);
-});
-
-// Preview functionality
-document.getElementById('previewBtn').addEventListener('click', function() {
+    // Check if custom image is selected but no file uploaded
+    if (useCustomRadio.checked && !coverImageInput.files[0]) {
+        e.preventDefault();
+        alert('Please select an image to upload or use your default image.');
+        return;
+    }
+    
+    // Check if default is selected but user has no default image
+    {% if not current_user.default_image_url %}
+    if (useDefaultRadio.checked) {
+        e.preventDefault();
+        alert('You don\'t have a default image set. Please upload a custom image or set a default image in settings.');
+        return;
+    }
+    {% endif %}
     const message = document.getElementById('message').value;
     const recipient = document.getElementById('recipient').value;
     const subject = document.getElementById('subject').value;

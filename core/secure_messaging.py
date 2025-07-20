@@ -18,8 +18,8 @@ from datetime import datetime
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.aes_module import encrypt_aes, decrypt_aes
-from core.rsa_module import encrypt_rsa, decrypt_rsa
+from core.aes_module import aes_encrypt, aes_decrypt
+from core.rsa_module import rsa_encrypt, rsa_decrypt
 from core.hmac_module import generate_hmac, verify_hmac
 from core.stego_module import encode_message_in_image, decode_message_from_image
 from core.cloudinary_manager import cloudinary_manager
@@ -45,14 +45,13 @@ class SecureMessagingPipeline:
         """
         try:
             # Step 1: Generate random AES key for this message
+            from core.aes_module import generate_aes_key
+            aes_key = generate_aes_key(32)  # 32 bytes for AES-256
             message_bytes = message_text.encode('utf-8')
-            aes_result = encrypt_aes(message_bytes)
-            aes_key = aes_result['aes_key']
-            encrypted_message = aes_result['encrypted_data']
-            iv = aes_result['iv']
+            encrypted_message, iv = aes_encrypt(message_bytes, aes_key)
             
             # Step 2: Encrypt AES key with recipient's RSA public key
-            encrypted_aes_key = encrypt_rsa(aes_key, recipient_user.public_key_pem)
+            encrypted_aes_key = rsa_encrypt(aes_key, recipient_user.public_key_pem)
             
             # Step 3: Create payload for steganography
             payload = {

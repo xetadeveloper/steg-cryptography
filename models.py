@@ -30,6 +30,8 @@ class User(UserMixin):
             self.is_online = user_data.get('is_online', False)
             self.public_key_pem = user_data.get('public_key_pem')
             self.private_key_pem = user_data.get('private_key_pem')
+            self.default_image_url = user_data.get('default_image_url')
+            self.default_image_cloudinary_id = user_data.get('default_image_cloudinary_id')
         else:
             self.id = None
             self.username = None
@@ -41,6 +43,8 @@ class User(UserMixin):
             self.is_online = False
             self.public_key_pem = None
             self.private_key_pem = None
+            self.default_image_url = None
+            self.default_image_cloudinary_id = None
     
     def get_id(self):
         return self.id
@@ -62,7 +66,9 @@ class User(UserMixin):
             'last_seen': datetime.now(timezone.utc),
             'is_online': False,
             'public_key_pem': public_key_pem,
-            'private_key_pem': private_key_pem  # In production, encrypt this
+            'private_key_pem': private_key_pem,  # In production, encrypt this
+            'default_image_url': None,
+            'default_image_cloudinary_id': None
         }
         
         result = mongo.db.users.insert_one(user_doc)
@@ -147,6 +153,25 @@ class User(UserMixin):
         )
         self.is_online = is_online
         self.last_seen = datetime.now(timezone.utc)
+    
+    def set_default_image(self, cloudinary_url, cloudinary_id):
+        """Set user's default steganography image."""
+        mongo.db.users.update_one(
+            {'_id': ObjectId(self.id)},
+            {'$set': {
+                'default_image_url': cloudinary_url,
+                'default_image_cloudinary_id': cloudinary_id
+            }}
+        )
+        self.default_image_url = cloudinary_url
+        self.default_image_cloudinary_id = cloudinary_id
+    
+    def get_default_image(self):
+        """Get user's default steganography image."""
+        return {
+            'url': self.default_image_url,
+            'cloudinary_id': self.default_image_cloudinary_id
+        }
     
     def get_unread_count(self):
         """Get count of unread messages."""
