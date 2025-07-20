@@ -103,6 +103,10 @@ class User(UserMixin):
         """Verify password against hash."""
         return bcrypt.check_password_hash(self.password_hash, password)
     
+    def check_password(self, password):
+        """Alias for verify_password for compatibility."""
+        return self.verify_password(password)
+    
     def update_last_seen(self):
         """Update user's last seen timestamp."""
         if self.id in users_store:

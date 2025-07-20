@@ -39,29 +39,32 @@ def dashboard():
     # Update user's online status
     current_user.update_last_seen()
     
-    # Get recent messages
-    recent_messages = current_user.get_received_messages(limit=5)
+    # Get received and sent messages
+    received_messages = current_user.get_received_messages(limit=10)
+    sent_messages = current_user.get_sent_messages(limit=10)
     
     # Get statistics
     unread_count = current_user.get_unread_count()
-    sent_messages = current_user.get_sent_messages(limit=10)
     sent_count = len(sent_messages)
     
-    # Count steganographic messages
-    stego_count = 0
-    for msg in recent_messages:
-        if msg.is_steganographic():
-            stego_count += 1
-    
-    # Get online users
+    # Get all users and online users
+    all_users = User.get_all_users(exclude_user_id=current_user.id)
     online_users = User.get_online_users(exclude_user_id=current_user.id)
     
     return render_template('messaging/dashboard.html',
-                         recent_messages=recent_messages,
+                         received_messages=received_messages,
+                         sent_messages=sent_messages,
                          unread_count=unread_count,
                          sent_count=sent_count,
-                         stego_count=stego_count,
+                         all_users=all_users,
                          online_users=online_users)
+
+@main.route('/api/ping', methods=['POST'])
+@login_required
+def api_ping():
+    """API endpoint for updating user status."""
+    current_user.update_last_seen()
+    return jsonify({'status': 'ok'})
 
 @main.route('/update_status', methods=['POST'])
 @login_required

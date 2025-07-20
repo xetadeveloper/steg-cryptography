@@ -5,16 +5,16 @@
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
+        <div class="col-md-6 col-lg-4">
             <div class="card shadow">
-                <div class="card-header text-center bg-primary text-white">
+                <div class="card-header text-center">
                     <h4 class="mb-0">
                         <i data-feather="log-in" class="me-2"></i>
-                        Sign In
+                        Login
                     </h4>
                 </div>
-                <div class="card-body p-4">
-                    <!-- Flash Messages -->
+                <div class="card-body">
+                    <!-- Flash messages -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
@@ -31,67 +31,62 @@
                             <label for="username" class="form-label">Username</label>
                             <div class="input-group">
                                 <span class="input-group-text">
-                                    <i data-feather="user"></i>
+                                    <i data-feather="user" class="small"></i>
                                 </span>
                                 <input type="text" class="form-control" id="username" name="username" 
-                                       required autocomplete="username" value="{{ request.form.username or '' }}">
+                                       required autocomplete="username"
+                                       value="{{ request.form.username if request.form.username }}">
                             </div>
                         </div>
-
+                        
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
                             <div class="input-group">
                                 <span class="input-group-text">
-                                    <i data-feather="lock"></i>
+                                    <i data-feather="lock" class="small"></i>
                                 </span>
                                 <input type="password" class="form-control" id="password" name="password" 
                                        required autocomplete="current-password">
                             </div>
                         </div>
-
+                        
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="remember" name="remember">
                             <label class="form-check-label" for="remember">
                                 Remember me
                             </label>
                         </div>
-
-                        <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i data-feather="log-in" class="me-2"></i>
-                                Sign In
-                            </button>
-                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i data-feather="log-in" class="me-2"></i>
+                            Login
+                        </button>
                     </form>
-
-                    <hr>
-
+                    
                     <div class="text-center">
-                        <p class="mb-0">Don't have an account?</p>
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-secondary">
+                        <p class="text-muted mb-0">Don't have an account?</p>
+                        <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-secondary w-100">
                             <i data-feather="user-plus" class="me-2"></i>
                             Create Account
                         </a>
                     </div>
                 </div>
-            </div>
-
-            <!-- Security Notice -->
-            <div class="alert alert-info mt-3" role="alert">
-                <i data-feather="shield" class="me-2"></i>
-                <strong>Security Notice:</strong> All messages are end-to-end encrypted using AES-256, RSA-2048, and HMAC-SHA256.
+                
+                <!-- Test Account Info -->
+                <div class="card-footer">
+                    <small class="text-muted">
+                        <strong>Test Accounts:</strong><br>
+                        Username: test1, Password: test123<br>
+                        Username: test2, Password: test123
+                    </small>
+                </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
-// Initialize Feather icons
-feather.replace();
-
-// Focus on username field
-document.getElementById('username').focus();
+    // Initialize feather icons
+    feather.replace();
 </script>
 {% endblock %}

@@ -26,12 +26,51 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">
-                            <i data-feather="home" class="me-1"></i>
-                            Home
-                        </a>
-                    </li>
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.dashboard') }}">
+                                <i data-feather="mail" class="me-1"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.compose') }}">
+                                <i data-feather="edit" class="me-1"></i>
+                                Compose
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i data-feather="user" class="me-1"></i>
+                                {{ current_user.display_name }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                    <i data-feather="log-out" class="me-2"></i>
+                                    Logout
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i data-feather="home" class="me-1"></i>
+                                Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.login') }}">
+                                <i data-feather="log-in" class="me-1"></i>
+                                Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.signup') }}">
+                                <i data-feather="user-plus" class="me-1"></i>
+                                Sign Up
+                            </a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>

@@ -91,8 +91,8 @@ def login():
     
     return render_template('auth/login.html')
 
-@auth.route('/register', methods=['GET', 'POST'])
-def register():
+@auth.route('/signup', methods=['GET', 'POST'])
+def signup():
     """User registration page and handler."""
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
@@ -132,7 +132,7 @@ def register():
         if errors:
             for error in errors:
                 flash(error, 'error')
-            return render_template('auth/register.html')
+            return render_template('auth/signup.html')
         
         try:
             # Create new user
@@ -148,9 +148,9 @@ def register():
             
         except Exception as e:
             flash('Registration failed. Please try again.', 'error')
-            return render_template('auth/register.html')
+            return render_template('auth/signup.html')
     
-    return render_template('auth/register.html')
+    return render_template('auth/signup.html')
 
 @auth.route('/logout')
 @login_required
