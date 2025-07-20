@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Cryptographic Steganography App{% endblock %}</title>
-    
+
     <!-- Bootstrap CSS with Replit dark theme -->
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
-    
+
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
-    
+
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -78,7 +78,55 @@
 
     <!-- Main Content -->
     <main class="flex-grow-1">
-        {% block content %}{% endblock %}
+        <div class="container-fluid">
+        {% if current_user.is_authenticated %}
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('main.dashboard') }}">
+                                <i data-feather="home" class="me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.compose') }}">
+                                <i data-feather="edit" class="me-2"></i>
+                                Compose Message
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.inbox') }}">
+                                <i data-feather="inbox" class="me-2"></i>
+                                Inbox
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.sent') }}">
+                                <i data-feather="send" class="me-2"></i>
+                                Sent Messages
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+        {% else %}
+        <div class="row">
+            <!-- Full width content for unauthenticated users -->
+            <main class="col-12">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+        {% endif %}
+    </div>
     </main>
 
     <!-- Footer -->
@@ -103,12 +151,12 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- Initialize Feather Icons -->
     <script>
         feather.replace();
     </script>
-    
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -27,10 +27,10 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
-    """Landing page - redirect to dashboard if logged in."""
+    """Landing page - redirect to dashboard if logged in, otherwise show login."""
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
-    return render_template('index.html')
+    return redirect(url_for('auth.login'))
 
 @main.route('/dashboard')
 @login_required
