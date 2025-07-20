@@ -62,8 +62,10 @@ def login():
             login_user(user, remember=remember)
             user.update_last_seen()
             
-            # Create session record
-            UserSession.create_session(user.id, session.sid, ip_address, user_agent)
+            # Create session record - use a generated session ID since Flask sessions don't have sid
+            import secrets
+            session_id = secrets.token_urlsafe(32)
+            UserSession.create_session(user.id, session_id, ip_address, user_agent)
             
             flash(f'Welcome back, {user.display_name}!', 'success')
             
@@ -151,8 +153,10 @@ def logout():
         # Set user offline
         current_user.set_online_status(False)
         
-        # Terminate session
-        UserSession.terminate_session(session.sid)
+        # Terminate session - use generated session ID since Flask sessions don't have sid
+        import secrets
+        session_id = secrets.token_urlsafe(32)
+        UserSession.terminate_session(session_id)
         
         username = current_user.username
         logout_user()

@@ -9,8 +9,8 @@ def create_app():
                 static_folder='../static')
     app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-for-development")
     
-    # MongoDB Atlas configuration  
-    app.config["MONGO_URI"] = "mongodb+srv://root:VfhIbcEPBS4UShDS@cryptocluster.rl6cnro.mongodb.net/secure_messaging?retryWrites=true&w=majority&appName=CryptoCluster"
+    # MongoDB Atlas configuration from environment
+    app.config["MONGO_URI"] = os.environ.get("MONGO_URI", "mongodb+srv://root:VfhIbcEPBS4UShDS@cryptocluster.rl6cnro.mongodb.net/secure_messaging?retryWrites=true&w=majority&appName=CryptoCluster")
     
     # Try to initialize MongoDB, fallback to in-memory storage if unavailable
     try:
