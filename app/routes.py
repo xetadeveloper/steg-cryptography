@@ -255,6 +255,7 @@ def decrypt_message():
 
 # API endpoints for encryption/decryption (keeping original functionality)
 @main.route('/api/encrypt', methods=['POST'])
+@login_required
 def encrypt_data():
     """API endpoint for full encryption pipeline"""
     try:
@@ -300,7 +301,8 @@ def encrypt_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@main.route('/api/decrypt', methods=['POST'])
+@main.route('/api/decrypt_file', methods=['POST'])
+@login_required
 def decrypt_data():
     """API endpoint for full decryption pipeline"""
     try:
@@ -347,6 +349,7 @@ def decrypt_data():
         return jsonify({'error': str(e)}), 500
 
 @main.route('/api/generate_keys', methods=['POST'])
+@login_required
 def generate_keys():
     """Generate RSA key pair for testing"""
     try:
@@ -361,6 +364,64 @@ def generate_keys():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@main.route('/manual-decrypt', methods=['GET', 'POST'])
+@login_required 
+def manual_decrypt():
+    """Manual image upload and decryption interface."""
+    if request.method == 'POST':
+        try:
+            # Get form data
+            rsa_private_key = request.form.get('rsa_private_key')
+            hmac_key = request.form.get('hmac_key', 'default_hmac_key')
+            encrypted_aes_key = request.form.get('encrypted_aes_key')
+            hmac_signature = request.form.get('hmac_signature')
+            
+            # Get uploaded steganographic image
+            if 'stego_image' not in request.files:
+                flash('Please select a steganographic image file.', 'error')
+                return render_template('messaging/manual_decrypt.html')
+            
+            file = request.files['stego_image']
+            if file.filename == '':
+                flash('Please select a steganographic image file.', 'error')
+                return render_template('messaging/manual_decrypt.html')
+            
+            if not rsa_private_key:
+                flash('Please enter the RSA private key.', 'error')
+                return render_template('messaging/manual_decrypt.html')
+                
+            # Read stego image data
+            stego_image_data = file.read()
+            
+            # Run decryption pipeline
+            if encrypted_aes_key and hmac_signature:
+                # Manual decryption with provided keys
+                decryption_result = decrypt_full_pipeline(
+                    stego_image_data=stego_image_data,
+                    encrypted_aes_key=base64.b64decode(encrypted_aes_key),
+                    hmac_signature=base64.b64decode(hmac_signature),
+                    rsa_private_key_pem=rsa_private_key,
+                    hmac_key=hmac_key
+                )
+            else:
+                # Try to extract everything from the image
+                decryption_result = decrypt_full_pipeline(
+                    stego_image_data=stego_image_data,
+                    rsa_private_key_pem=rsa_private_key,
+                    hmac_key=hmac_key
+                )
+            
+            flash('Message decrypted successfully!', 'success')
+            return render_template('messaging/manual_decrypt.html', 
+                                 decryption_result=decryption_result,
+                                 show_result=True)
+            
+        except Exception as e:
+            flash(f'Decryption failed: {str(e)}', 'error')
+            return render_template('messaging/manual_decrypt.html')
+    
+    return render_template('messaging/manual_decrypt.html')
 
 @main.errorhandler(413)
 def too_large(e):

@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Decrypt - Secure Messaging{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i data-feather="upload" class="me-2"></i>Manual Image Decryption</h2>
+            </div>
+            
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <!-- Decryption Form -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i data-feather="key" class="me-2"></i>
+                                Decrypt Steganographic Image
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="stego_image" class="form-label">Steganographic Image *</label>
+                                    <input type="file" class="form-control" id="stego_image" name="stego_image" 
+                                           accept=".jpg,.jpeg,.png,.bmp" required>
+                                    <div class="form-text">Select the image containing the hidden encrypted message.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="rsa_private_key" class="form-label">RSA Private Key *</label>
+                                    <textarea class="form-control font-monospace" id="rsa_private_key" name="rsa_private_key" 
+                                              rows="8" placeholder="-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC...
+-----END PRIVATE KEY-----" required></textarea>
+                                    <div class="form-text">Paste your RSA private key used for decryption.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="hmac_key" class="form-label">HMAC Key</label>
+                                    <input type="text" class="form-control" id="hmac_key" name="hmac_key" 
+                                           value="default_hmac_key" placeholder="Enter HMAC key">
+                                    <div class="form-text">The HMAC key used for message authentication (defaults to 'default_hmac_key').</div>
+                                </div>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Advanced Options (Optional)</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="encrypted_aes_key" class="form-label">Encrypted AES Key (Base64)</label>
+                                            <textarea class="form-control font-monospace" id="encrypted_aes_key" name="encrypted_aes_key" 
+                                                      rows="3" placeholder="Base64 encoded encrypted AES key (if not embedded in image)"></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="hmac_signature" class="form-label">HMAC Signature (Base64)</label>
+                                            <textarea class="form-control font-monospace" id="hmac_signature" name="hmac_signature" 
+                                                      rows="2" placeholder="Base64 encoded HMAC signature (if not embedded in image)"></textarea>
+                                        </div>
+                                        
+                                        <small class="text-muted">
+                                            Leave these fields empty if the keys are embedded in the steganographic image.
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i data-feather="unlock" class="me-2"></i>
+                                        Decrypt Message
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Instructions and Tips -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i data-feather="info" class="me-2"></i>
+                                How to Use
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <strong>Manual Decryption Process:</strong>
+                                <ol class="mb-0">
+                                    <li>Upload the steganographic image</li>
+                                    <li>Paste the RSA private key</li>
+                                    <li>Enter the HMAC key (if different from default)</li>
+                                    <li>Click "Decrypt Message"</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <strong>Security Note:</strong><br>
+                                Your private keys are processed locally and not stored on the server.
+                            </div>
+                            
+                            <div class="alert alert-success">
+                                <strong>Advanced Mode:</strong><br>
+                                If you have the encrypted AES key and HMAC signature separately, 
+                                you can provide them in the advanced options section.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if show_result and decryption_result %}
+            <!-- Decryption Result -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i data-feather="check-circle" class="me-2"></i>
+                                Decryption Result
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6>Decrypted Message:</h6>
+                                    <div class="bg-light p-3 rounded border">
+                                        <pre class="mb-0">{{ decryption_result.decrypted_message }}</pre>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <strong>HMAC Verification:</strong>
+                                        <span class="ms-2 badge {{ 'bg-success' if decryption_result.hmac_verified else 'bg-danger' }}">
+                                            {{ 'Valid' if decryption_result.hmac_verified else 'Invalid' }}
+                                        </span>
+                                    </div>
+                                    
+                                    {% if decryption_result.hmac_verified %}
+                                        <div class="alert alert-success">
+                                            <i data-feather="shield-check" class="me-2"></i>
+                                            Message integrity verified!
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i data-feather="alert-triangle" class="me-2"></i>
+                                            Message integrity could not be verified.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}
