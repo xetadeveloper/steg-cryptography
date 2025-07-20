@@ -4,24 +4,10 @@ from flask_login import login_user, logout_user, login_required, current_user
 # Import models based on database connection status
 try:
     from models import User, LoginAttempt, UserSession
+    print("Using MongoDB models for auth")
 except:
-    from models_fallback import User
-    # Fallback classes for development
-    class LoginAttempt:
-        @staticmethod
-        def get_recent_failures(username, hours=1):
-            return 0
-        @staticmethod  
-        def record_attempt(username, success, ip_address=None):
-            pass
-    
-    class UserSession:
-        @staticmethod
-        def create_session(user_id, ip_address=None, user_agent=None):
-            return None
-        @staticmethod
-        def find_by_token(token):
-            return None
+    from models_fallback import User, LoginAttempt, UserSession
+    print("Using fallback models for auth")
 import re
 from datetime import datetime, timezone
 
@@ -72,6 +58,7 @@ def login():
         
         if user and user.check_password(password):
             # Successful login
+            print(f"Login successful for user: {username}")
             login_user(user, remember=remember)
             user.update_last_seen()
             
@@ -86,7 +73,11 @@ def login():
                 return redirect(next_page)
             return redirect(url_for('main.dashboard'))
         else:
-            # Failed login
+            # Failed login - add debugging
+            if user:
+                print(f"Password check failed for user: {username}")
+            else:
+                print(f"User not found: {username}")
             flash('Invalid username or password.', 'error')
     
     return render_template('auth/login.html')
