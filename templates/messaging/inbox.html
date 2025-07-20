@@ -185,6 +185,12 @@
 // Initialize Feather icons
 feather.replace();
 
+// Auto-refresh inbox every 1 minute
+setInterval(function() {
+    console.log('Auto-refreshing inbox...');
+    window.location.reload();
+}, 60000); // 60 seconds = 1 minute
+
 // Refresh button handler
 document.getElementById('refreshBtn').addEventListener('click', function() {
     const btn = this;

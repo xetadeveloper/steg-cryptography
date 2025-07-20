@@ -72,93 +72,69 @@ def update_status():
 @main.route('/compose', methods=['GET', 'POST'])
 @login_required
 def compose():
-    """Message composition page and handler."""
+    """Compose and send encrypted messages using Cloudinary."""
     if request.method == 'POST':
+        # Handle message composition and encryption
         recipient_username = request.form.get('recipient')
-        subject = request.form.get('subject')
-        message_content = request.form.get('message')
-        message_type = request.form.get('message_type', 'text')
-        hmac_key = request.form.get('hmac_key', 'default_hmac_key')
+        message = request.form.get('message')
         
-        if not recipient_username or not message_content:
-            flash('Please select a recipient and enter a message.', 'error')
-            return redirect(url_for('main.compose'))
+        if not all([recipient_username, message]):
+            flash('Recipient and message are required.', 'error')
+            return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
         
         # Find recipient
         recipient = User.find_by_username(recipient_username)
         if not recipient:
             flash('Recipient not found.', 'error')
-            return redirect(url_for('main.compose'))
+            return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
         
-        try:
-            # Prepare encryption parameters
-            cover_image_path = None
-            stego_image_data = None
-            cover_image_name = None
-            
-            if message_type == 'steganographic':
-                # Use a default image from static folder for steganography
-                cover_image_path = os.path.join('static', 'sample_image.jpg')
-                if not os.path.exists(cover_image_path):
-                    # Create a simple default image if none exists
-                    from PIL import Image, ImageDraw
-                    img = Image.new('RGB', (800, 600), color=(73, 109, 137))
-                    d = ImageDraw.Draw(img)
-                    d.text((10, 10), "Steganography Cover Image", fill=(255, 255, 0))
-                    os.makedirs('static', exist_ok=True)
-                    img.save(cover_image_path)
+        # Handle file upload for cover image
+        if 'cover_image' not in request.files:
+            flash('Cover image is required.', 'error')
+            return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+        
+        file = request.files['cover_image']
+        if file.filename == '':
+            flash('No image selected.', 'error')
+            return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
+        
+        if file and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            try:
+                # Read and validate image
+                image_data = file.read()
+                image = Image.open(io.BytesIO(image_data))
                 
-                # Read the cover image
-                with open(cover_image_path, 'rb') as f:
-                    cover_image_data = f.read()
-                cover_image_name = 'sample_image.jpg'
-            else:
-                # For regular encrypted messages, use a small placeholder image
-                cover_image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x12IDATx\x9cc```bPPP\x00\x02D\x00\x00\xa2\x00\x00\x00\x00IEND\xaeB`\x82'
+                # Convert to PNG for consistent steganography
+                if image.mode != 'RGB':
+                    image = image.convert('RGB')
+                
+                img_buffer = io.BytesIO()
+                image.save(img_buffer, format='PNG')
+                image_data = img_buffer.getvalue()
+                
+                # Use secure messaging pipeline
+                from core.secure_messaging import secure_messaging
+                result = secure_messaging.send_message(
+                    sender_user=current_user,
+                    recipient_user=recipient,
+                    message_text=message,
+                    cover_image_data=image_data
+                )
+                
+                if result['success']:
+                    flash(f'Message sent successfully to {recipient.display_name}!', 'success')
+                    return redirect(url_for('main.dashboard'))
+                else:
+                    flash(f'Failed to send message: {result["error"]}', 'error')
             
-            # Run encryption pipeline
-            encryption_result = encrypt_full_pipeline(
-                message=message_content,
-                image_data=cover_image_data,
-                rsa_public_key_pem=recipient.public_key_pem,
-                hmac_key=hmac_key
-            )
-            
-            # Create message in database
-            if message_type == 'steganographic':
-                stego_image_data = base64.b64encode(encryption_result['stego_image_data']).decode('utf-8')
-            
-            message = Message.create_message(
-                sender_id=current_user.id,
-                recipient_id=recipient.id,
-                encrypted_content=base64.b64encode(encryption_result['encrypted_message']).decode('utf-8'),
-                encrypted_aes_key=base64.b64encode(encryption_result['encrypted_aes_key']).decode('utf-8'),
-                hmac_signature=base64.b64encode(encryption_result['hmac_signature']).decode('utf-8'),
-                message_type=message_type,
-                subject=subject,
-                stego_image_data=stego_image_data,
-                cover_image_name=cover_image_name,
-                hmac_key_hint=hmac_key
-            )
-            
-            flash(f'Message sent successfully to {recipient.display_name}!', 'success')
-            return redirect(url_for('main.sent'))
-            
-        except Exception as e:
-            flash(f'Failed to send message: {str(e)}', 'error')
-            return redirect(url_for('main.compose'))
+            except Exception as e:
+                flash(f'Error processing image: {str(e)}', 'error')
+        else:
+            flash('Please upload a valid image file (PNG, JPG, JPEG).', 'error')
     
-    # GET request - show compose form
-    recipient_username = request.args.get('recipient')
-    message_type = request.args.get('type', 'text')
-    
-    # Get all users except current user
+    # Get all users except current user for recipient selection
     users = User.get_all_users(exclude_user_id=current_user.id)
-    
-    return render_template('messaging/compose.html',
-                         users=users,
-                         recipient_username=recipient_username,
-                         message_type=message_type)
+    return render_template('messaging/compose.html', users=users)
 
 @main.route('/inbox')
 @login_required
@@ -177,27 +153,47 @@ def sent():
 @main.route('/message/<message_id>')
 @login_required
 def view_message(message_id):
-    """View and decrypt a specific message."""
+    """View and decrypt a specific message from Cloudinary."""
     message = Message.find_by_id(message_id)
-    
     if not message:
         flash('Message not found.', 'error')
         return redirect(url_for('main.inbox'))
     
-    # Check if user has permission to view this message
+    # Check if user is authorized to view this message
     if message.recipient_id != current_user.id and message.sender_id != current_user.id:
-        flash('You do not have permission to view this message.', 'error')
+        flash('You are not authorized to view this message.', 'error')
         return redirect(url_for('main.inbox'))
     
-    # Mark as read if recipient is viewing
-    if message.recipient_id == current_user.id:
-        message.mark_as_read()
+    # Decrypt the message if recipient is viewing
+    decrypted_message = None
+    decryption_error = None
     
-    return render_template('messaging/view_message.html', message=message)
+    if message.recipient_id == current_user.id:
+        from core.secure_messaging import secure_messaging
+        result = secure_messaging.decrypt_message(message, current_user)
+        
+        if result['success']:
+            decrypted_message = result['message']
+            message.mark_as_read()
+        else:
+            decryption_error = result['error']
+    
+    # Get sender and recipient info
+    sender = message.get_sender()
+    recipient = message.get_recipient()
+    
+    return render_template('messaging/view_message.html',
+                         message=message,
+                         sender=sender,
+                         recipient=recipient,
+                         decrypted_message=decrypted_message,
+                         decryption_error=decryption_error)
+
+
 
 @main.route('/api/decrypt', methods=['POST'])
 @login_required
-def decrypt_message():
+def decrypt_api():
     """API endpoint to decrypt a message."""
     try:
         message_id = request.form.get('message_id')

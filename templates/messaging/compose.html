@@ -102,25 +102,17 @@
                                     </div>
                                 </div>
 
-                                <!-- Cover Image (for steganographic messages) -->
-                                <div class="mb-3" id="coverImageSection" style="display: {% if message_type == 'steganographic' %}block{% else %}none{% endif %};">
+                                <!-- Cover Image (required for all steganographic messages) -->
+                                <div class="mb-3">
                                     <label for="cover_image" class="form-label">Cover Image *</label>
                                     <input type="file" class="form-control" id="cover_image" name="cover_image" 
-                                           accept="image/*">
+                                           accept="image/*" required>
                                     <div class="form-text">
-                                        Select an image to hide your message in. Larger images work better.
+                                        Select an image to hide your encrypted message in. JPG, PNG formats supported.
                                     </div>
                                 </div>
 
-                                <!-- HMAC Key -->
-                                <div class="mb-3">
-                                    <label for="hmac_key" class="form-label">HMAC Key</label>
-                                    <input type="text" class="form-control" id="hmac_key" name="hmac_key" 
-                                           value="default_hmac_key" placeholder="Enter HMAC key for message integrity">
-                                    <div class="form-text">
-                                        Used to verify message integrity. Share this key securely with the recipient.
-                                    </div>
-                                </div>
+                                <!-- HMAC Key removed - Using automatic key management for security -->
                             </div>
                         </div>
 
@@ -133,10 +125,10 @@
                                             <i data-feather="eye" class="me-2"></i>
                                             Preview
                                         </button>
-                                        <button type="button" class="btn btn-outline-info" id="generateKeysBtn">
+                                        <a href="{{ url_for('auth.settings') }}" class="btn btn-outline-info">
                                             <i data-feather="key" class="me-2"></i>
-                                            Generate RSA Keys
-                                        </button>
+                                            View RSA Keys
+                                        </a>
                                     </div>
                                     <div>
                                         <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary me-2">

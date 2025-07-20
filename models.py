@@ -177,6 +177,28 @@ class User(UserMixin):
             messages.append(Message(msg_data))
         return messages
     
+    def regenerate_rsa_keys(self):
+        """Regenerate RSA key pair for the user."""
+        from core.rsa_module import generate_rsa_keypair_pem
+        
+        private_key_pem, public_key_pem = generate_rsa_keypair_pem()
+        
+        mongo.db.users.update_one(
+            {'_id': ObjectId(self.id)},
+            {'$set': {
+                'public_key_pem': public_key_pem,
+                'private_key_pem': private_key_pem
+            }}
+        )
+        
+        self.public_key_pem = public_key_pem
+        self.private_key_pem = private_key_pem
+        
+        return {
+            'public_key_pem': public_key_pem,
+            'private_key_pem': private_key_pem
+        }
+    
     def to_dict(self):
         """Convert user to dictionary."""
         return {
@@ -191,50 +213,47 @@ class User(UserMixin):
 
 
 class Message:
-    """Message model for encrypted communications."""
+    """Message model for encrypted steganographic communications."""
     
     def __init__(self, message_data=None):
         if message_data:
             self.id = str(message_data.get('_id'))
             self.sender_id = str(message_data.get('sender_id'))
             self.recipient_id = str(message_data.get('recipient_id'))
-            self.message_type = message_data.get('message_type', 'text')
-            self.encrypted_content = message_data.get('encrypted_content')
-            self.stego_image_data = message_data.get('stego_image_data')
-            self.cover_image_name = message_data.get('cover_image_name')
+            self.cloudinary_public_id = message_data.get('cloudinary_public_id')
+            self.cloudinary_url = message_data.get('cloudinary_url')
             self.encrypted_aes_key = message_data.get('encrypted_aes_key')
             self.hmac_signature = message_data.get('hmac_signature')
-            self.hmac_key_hint = message_data.get('hmac_key_hint', 'default_hmac_key')
-            self.subject = message_data.get('subject')
+            self.cover_image_name = message_data.get('cover_image_name', 'uploaded_image.png')
             self.timestamp = message_data.get('timestamp')
             self.is_read = message_data.get('is_read', False)
-            self.read_at = message_data.get('read_at')
-            self.delivery_status = message_data.get('delivery_status', 'sent')
         else:
             self.id = None
+            self.sender_id = None
+            self.recipient_id = None
+            self.cloudinary_public_id = None
+            self.cloudinary_url = None
+            self.encrypted_aes_key = None
+            self.hmac_signature = None
+            self.cover_image_name = 'uploaded_image.png'
+            self.timestamp = None
+            self.is_read = False
     
     @staticmethod
-    def create_message(sender_id, recipient_id, encrypted_content, encrypted_aes_key, 
-                      hmac_signature, message_type='text', subject=None, 
-                      stego_image_data=None, cover_image_name=None, hmac_key_hint='default_hmac_key'):
-        """Create a new message."""
+    def create_message(sender_id, recipient_id, cloudinary_public_id, cloudinary_url,
+                      encrypted_aes_key, hmac_signature, cover_image_name=None):
+        """Create a new steganographic message."""
         message_doc = {
             'sender_id': ObjectId(sender_id),
             'recipient_id': ObjectId(recipient_id),
-            'message_type': message_type,
-            'encrypted_content': encrypted_content,
+            'cloudinary_public_id': cloudinary_public_id,
+            'cloudinary_url': cloudinary_url,
             'encrypted_aes_key': encrypted_aes_key,
             'hmac_signature': hmac_signature,
-            'hmac_key_hint': hmac_key_hint,
-            'subject': subject,
+            'cover_image_name': cover_image_name or 'uploaded_image.png',
             'timestamp': datetime.now(timezone.utc),
-            'is_read': False,
-            'delivery_status': 'sent'
+            'is_read': False
         }
-        
-        if stego_image_data:
-            message_doc['stego_image_data'] = stego_image_data
-            message_doc['cover_image_name'] = cover_image_name
         
         result = mongo.db.messages.insert_one(message_doc)
         message_doc['_id'] = result.inserted_id

@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Settings - CryptoStego{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i data-feather="settings" class="me-2"></i>Settings
+                </h1>
+            </div>
+
+            <!-- Profile Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="user" class="me-2"></i>Profile Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="display_name" class="form-label">Display Name</label>
+                                    <input type="text" class="form-control" id="display_name" name="display_name" 
+                                           value="{{ current_user.display_name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" value="{{ current_user.email }}" readonly>
+                                    <div class="form-text">Email cannot be changed</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="save" class="me-1"></i>Update Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- RSA Cryptographic Keys -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i data-feather="key" class="me-2"></i>RSA Cryptographic Keys
+                    </h5>
+                    <button type="button" class="btn btn-warning btn-sm" onclick="regenerateKeys()">
+                        <i data-feather="refresh-cw" class="me-1"></i>Regenerate Keys
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i data-feather="info" class="me-2"></i>
+                        Your RSA keys are used for secure message encryption. The public key can be shared, but keep your private key secret.
+                    </div>
+                    
+                    <!-- Public Key -->
+                    <div class="mb-4">
+                        <label for="public_key" class="form-label">
+                            <strong>Public Key (RSA-2048)</strong>
+                            <small class="text-muted">- Share this with others to receive messages</small>
+                        </label>
+                        <div class="input-group">
+                            <textarea class="form-control font-monospace" id="public_key" rows="8" readonly>{{ current_user.public_key_pem }}</textarea>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('public_key')">
+                                <i data-feather="copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Private Key -->
+                    <div class="mb-4">
+                        <label for="private_key" class="form-label">
+                            <strong>Private Key (RSA-2048)</strong>
+                            <small class="text-danger">- Keep this secret! Never share this key</small>
+                        </label>
+                        <div class="input-group">
+                            <textarea class="form-control font-monospace text-danger" id="private_key" rows="12" readonly>{{ current_user.private_key_pem }}</textarea>
+                            <button class="btn btn-outline-danger" type="button" onclick="copyToClipboard('private_key')">
+                                <i data-feather="copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Key Information -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Key Information</h6>
+                                    <p class="card-text">
+                                        <strong>Algorithm:</strong> RSA-2048<br>
+                                        <strong>Generated:</strong> {{ current_user.created_at.strftime('%Y-%m-%d %H:%M UTC') if current_user.created_at else 'Unknown' }}<br>
+                                        <strong>Public Key Length:</strong> {{ current_user.public_key_pem|length }} characters<br>
+                                        <strong>Private Key Length:</strong> {{ current_user.private_key_pem|length }} characters
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Security Notes</h6>
+                                    <ul class="card-text">
+                                        <li>Your private key never leaves this server</li>
+                                        <li>Keys are generated using cryptographically secure random numbers</li>
+                                        <li>Regenerating keys will invalidate old encrypted messages</li>
+                                        <li>RSA-2048 provides strong security for the foreseeable future</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="lock" class="me-2"></i>Change Password
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="current_password" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="current_password" name="current_password">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-warning">
+                            <i data-feather="shield" class="me-1"></i>Change Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Account Actions -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i data-feather="alert-triangle" class="me-2"></i>Danger Zone
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>These actions cannot be undone. Please be careful.</p>
+                    <button type="button" class="btn btn-outline-danger me-2" onclick="clearAllMessages()">
+                        <i data-feather="trash-2" class="me-1"></i>Clear All Messages
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="confirmAccountDeletion()">
+                        <i data-feather="user-x" class="me-1"></i>Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast for notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="copyToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i data-feather="check-circle" class="text-success me-2"></i>
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Key copied to clipboard!
+        </div>
+    </div>
+</div>
+
+<script>
+// Copy to clipboard function
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    document.execCommand('copy');
+    
+    // Show success toast
+    const toast = new bootstrap.Toast(document.getElementById('copyToast'));
+    toast.show();
+}
+
+// Regenerate RSA keys
+function regenerateKeys() {
+    if (confirm('Are you sure you want to regenerate your RSA keys? This will invalidate all existing encrypted messages that you cannot currently decrypt.')) {
+        fetch('{{ url_for("auth.regenerate_keys") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('RSA keys regenerated successfully! The page will reload.');
+                window.location.reload();
+            } else {
+                alert('Failed to regenerate keys: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error);
+        });
+    }
+}
+
+// Clear all messages
+function clearAllMessages() {
+    if (confirm('Are you sure you want to delete all your messages? This action cannot be undone.')) {
+        // Implementation would go here
+        alert('Feature not yet implemented');
+    }
+}
+
+// Account deletion
+function confirmAccountDeletion() {
+    if (confirm('Are you absolutely sure you want to delete your account? This will permanently delete all your data and cannot be undone.')) {
+        if (confirm('This is your final warning. Type DELETE to confirm:') && prompt('Type DELETE to confirm:') === 'DELETE') {
+            // Implementation would go here
+            alert('Account deletion feature not yet implemented');
+        }
+    }
+}
+
+// Initialize tooltips and replace icons
+document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+});
+</script>
+{% endblock %}

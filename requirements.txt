@@ -9,3 +9,6 @@ bson
 flask-pymongo
 pymongo[srv]==4.6.0
 certifi
+cloudinary
+psutil
+cryptography==41.0.4

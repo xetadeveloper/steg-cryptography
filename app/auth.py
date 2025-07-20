@@ -160,11 +160,33 @@ def logout():
     
     return redirect(url_for('main.index'))
 
+@auth.route('/settings')
+@login_required
+def settings():
+    """User settings page with RSA key management."""
+    return render_template('auth/settings.html', user=current_user)
+
+@auth.route('/regenerate_keys', methods=['POST'])
+@login_required
+def regenerate_keys():
+    """Regenerate user's RSA key pair."""
+    try:
+        result = current_user.regenerate_rsa_keys()
+        return jsonify({
+            'success': True,
+            'message': 'RSA keys regenerated successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @auth.route('/profile')
 @login_required
 def profile():
-    """User profile page."""
-    return render_template('auth/profile.html', user=current_user)
+    """User profile page - redirect to settings."""
+    return redirect(url_for('auth.settings'))
 
 @auth.route('/profile/edit', methods=['GET', 'POST'])
 @login_required
