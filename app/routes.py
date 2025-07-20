@@ -15,13 +15,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.encrypt_full import encrypt_full_pipeline
 from core.decrypt_full import decrypt_full_pipeline
 
-# Import models based on database connection status
-try:
-    from models import User, Message
-    print("Using MongoDB models")
-except:
-    from models_fallback import User, Message
-    print("Using fallback in-memory models")
+# Import MongoDB models directly (MongoDB is connected and working)
+from models import User, Message
+print("Using MongoDB models")
 
 main = Blueprint('main', __name__)
 

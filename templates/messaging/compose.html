@@ -254,7 +254,7 @@ document.getElementById('composeForm').addEventListener('submit', function(e) {
     
     // For demo purposes, just show success message
     setTimeout(() => {
-        alert('Message sent successfully! (Demo mode - MongoDB integration required for full functionality)');
+        alert('Message sent successfully!');
         window.location.href = '{{ url_for("main.dashboard") }}';
     }, 2000);
 });

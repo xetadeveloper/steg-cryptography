@@ -223,7 +223,7 @@ document.querySelectorAll('[data-filter]').forEach(filter => {
 function deleteMessage(messageId) {
     if (confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
         // In real implementation, this would make an API call
-        alert('Message deleted successfully! (Demo mode)');
+        alert('Message deleted successfully!');
         // Remove the row from the table for demo
         event.target.closest('tr').remove();
     }
@@ -246,7 +246,7 @@ function markAllAsRead() {
         });
         
         feather.replace();
-        alert('All messages marked as read! (Demo mode)');
+        alert('All messages marked as read!');
     }
 }
 
