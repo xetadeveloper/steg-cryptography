@@ -262,10 +262,9 @@ def validate_image_for_steganography(image_data):
             'image_info': None
         }
 
-import cv2
+# Additional imports for enhanced functionality
 import os
 import datetime
-from core.steganography import Stego
 
 def embed_in_image(input_image: str, ciphertext: bytes, iv: bytes, rsa_encrypted_key: bytes, hmac_tag: bytes) -> dict:
     """
