@@ -104,7 +104,7 @@ def compose():
                 flash('No image selected.', 'error')
                 return render_template('messaging/compose.html', users=User.get_all_users(exclude_user_id=current_user.id))
             
-            if file and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            if file and file.filename and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
                 try:
                     # Read and validate image
                     image_data = file.read()
@@ -250,34 +250,18 @@ def decrypt_api():
         encrypted_aes_key = base64.b64decode(message.encrypted_aes_key)
         hmac_signature = base64.b64decode(message.hmac_signature)
         
-        if message.is_steganographic():
-            # Decode steganographic image
-            stego_image_data = base64.b64decode(message.stego_image_data)
-            
-            # Run decryption pipeline
-            decryption_result = decrypt_full_pipeline(
-                stego_image_data=stego_image_data,
-                encrypted_aes_key=encrypted_aes_key,
-                hmac_signature=hmac_signature,
-                rsa_private_key_pem=rsa_private_key,
-                hmac_key=hmac_key
-            )
-        else:
-            # For regular messages, decrypt directly
-            from core.decrypt_full import decrypt_message_only
-            encrypted_message = base64.b64decode(message.encrypted_content)
-            decryption_result = decrypt_message_only(
-                encrypted_message=encrypted_message,
-                encrypted_aes_key=encrypted_aes_key,
-                hmac_signature=hmac_signature,
-                rsa_private_key_pem=rsa_private_key,
-                hmac_key=hmac_key
-            )
+        # All messages in our system are steganographic, use secure_messaging
+        from core.secure_messaging import secure_messaging
+        decryption_result = secure_messaging.decrypt_message(message, current_user)
+        
+        if not decryption_result['success']:
+            return jsonify({'error': decryption_result['error']}), 400
         
         return jsonify({
             'success': True,
-            'decrypted_message': decryption_result['decrypted_message'],
-            'hmac_verified': decryption_result['hmac_verified']
+            'decrypted_message': decryption_result['message'],
+            'sender_id': decryption_result.get('sender_id', ''),
+            'timestamp': decryption_result.get('timestamp', '')
         })
         
     except Exception as e:
@@ -313,35 +297,19 @@ def decrypt_message_auto():
         encrypted_aes_key = base64.b64decode(message.encrypted_aes_key)
         hmac_signature = message.hmac_signature
         
-        # Download image from Cloudinary for steganographic messages
-        if message.is_steganographic() and message.cloudinary_url:
-            import requests
-            response = requests.get(message.cloudinary_url)
-            if response.status_code == 200:
-                stego_image_data = response.content
-                
-                # Run decryption pipeline
-                from core.decrypt_full import decrypt_full_pipeline
-                decryption_result = decrypt_full_pipeline(
-                    stego_image_data=stego_image_data,
-                    encrypted_aes_key=encrypted_aes_key,
-                    hmac_signature=hmac_signature,
-                    rsa_private_key_pem=rsa_private_key,
-                    hmac_key=hmac_key
-                )
-                
-                # Mark message as read
-                message.mark_as_read()
-                
-                return jsonify({
-                    'success': True,
-                    'decrypted_message': decryption_result['decrypted_message'],
-                    'hmac_verified': decryption_result['hmac_verified']
-                })
-            else:
-                return jsonify({'success': False, 'error': 'Failed to download steganographic image'}), 500
-        else:
-            return jsonify({'success': False, 'error': 'Message format not supported'}), 400
+        # Use the secure messaging pipeline for consistent decryption
+        from core.secure_messaging import secure_messaging
+        decryption_result = secure_messaging.decrypt_message(message, current_user)
+        
+        if not decryption_result['success']:
+            return jsonify({'success': False, 'error': decryption_result['error']}), 400
+        
+        return jsonify({
+            'success': True,
+            'decrypted_message': decryption_result['message'],
+            'sender_id': decryption_result.get('sender_id', ''),
+            'timestamp': decryption_result.get('timestamp', '')
+        })
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -424,6 +392,7 @@ def decrypt_data():
         hmac_signature_bytes = base64.b64decode(hmac_signature)
         
         # Run decryption pipeline
+        from core.decrypt_full import decrypt_full_pipeline
         result = decrypt_full_pipeline(
             stego_image_data=stego_image_data,
             encrypted_aes_key=encrypted_aes_key_bytes,
@@ -490,6 +459,7 @@ def manual_decrypt():
             # Run decryption pipeline
             if encrypted_aes_key and hmac_signature:
                 # Manual decryption with provided keys
+                from core.decrypt_full import decrypt_full_pipeline
                 decryption_result = decrypt_full_pipeline(
                     stego_image_data=stego_image_data,
                     encrypted_aes_key=base64.b64decode(encrypted_aes_key),
@@ -498,7 +468,7 @@ def manual_decrypt():
                     hmac_key=hmac_key
                 )
             else:
-                # Try to extract everything from the image
+                # Try to extract everything from the image  
                 decryption_result = decrypt_full_pipeline(
                     stego_image_data=stego_image_data,
                     rsa_private_key_pem=rsa_private_key,

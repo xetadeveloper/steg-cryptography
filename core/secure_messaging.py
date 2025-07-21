@@ -164,12 +164,12 @@ class SecureMessagingPipeline:
             
             # Step 5: Decrypt AES key using recipient's RSA private key
             encrypted_aes_key = base64.b64decode(payload['encrypted_aes_key'])
-            aes_key = decrypt_rsa(encrypted_aes_key, recipient_user.private_key_pem)
+            aes_key = rsa_decrypt(encrypted_aes_key, recipient_user.private_key_pem)
             
             # Step 6: Decrypt message using AES key
             encrypted_message = base64.b64decode(payload['encrypted_message'])
             iv = base64.b64decode(payload['iv'])
-            decrypted_message = decrypt_aes(encrypted_message, aes_key, iv)
+            decrypted_message = aes_decrypt(encrypted_message, aes_key, iv)
             
             # Step 7: Mark message as read
             message_obj.mark_as_read()
