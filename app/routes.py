@@ -77,6 +77,7 @@ def compose():
         # Handle message composition and encryption
         recipient_username = request.form.get('recipient')
         message = request.form.get('message')
+        subject = request.form.get('subject', 'Encrypted Message')
         
         if not all([recipient_username, message]):
             flash('Recipient and message are required.', 'error')
@@ -150,7 +151,8 @@ def compose():
                     sender_user=current_user,
                     recipient_user=recipient,
                     message_text=message,
-                    cover_image_data=cover_image_data
+                    cover_image_data=cover_image_data,
+                    subject=subject
                 )
                 
                 if result['success']:
@@ -295,9 +297,10 @@ def decrypt_message_auto():
         if not message:
             return jsonify({'success': False, 'error': 'Message not found'}), 404
             
-        # Verify user is the recipient
-        if message.recipient_id != current_user.id:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        # Verify user is the recipient (handle string/ObjectId comparison)
+        print(f"Debug: message.recipient_id={message.recipient_id}, current_user.id={current_user.id}")
+        if str(message.recipient_id) != str(current_user.id):
+            return jsonify({'success': False, 'error': f'Unauthorized: recipient_id={message.recipient_id}, user_id={current_user.id}'}), 403
             
         # Use stored RSA private key and default HMAC key
         rsa_private_key = current_user.private_key_pem

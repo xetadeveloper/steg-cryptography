@@ -30,7 +30,7 @@ class SecureMessagingPipeline:
     def __init__(self):
         self.hmac_key = "cryptostego_app_default_key"  # Use consistent HMAC key
     
-    def send_message(self, sender_user, recipient_user, message_text, cover_image_data):
+    def send_message(self, sender_user, recipient_user, message_text, cover_image_data, subject=None):
         """
         Send an encrypted message using steganography.
         
@@ -39,6 +39,7 @@ class SecureMessagingPipeline:
             recipient_user: Recipient User object  
             message_text (str): Plain text message
             cover_image_data (bytes): Cover image data
+            subject (str, optional): Message subject
             
         Returns:
             dict: Result with success status and message details
@@ -95,7 +96,7 @@ class SecureMessagingPipeline:
                 encrypted_aes_key=base64.b64encode(encrypted_aes_key).decode(),
                 hmac_signature=hmac_signature,
                 cover_image_name=f"message_{message_id}.png",
-                subject=f"Message from {sender_user.display_name}"
+                subject=subject or f"Message from {sender_user.display_name}"
             )
             
             return {
