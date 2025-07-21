@@ -211,13 +211,15 @@ def view_message(message_id):
         from core.secure_messaging import secure_messaging
         result = secure_messaging.decrypt_message(message, current_user)
         
-        if result['success']:
+        if result and result['success']:
             decrypted_message = result['message']
             # Only mark as read if recipient is viewing
             if message.recipient_id == current_user.id:
                 message.mark_as_read()
-        else:
+        elif result:
             decryption_error = result['error']
+        else:
+            decryption_error = "Failed to decrypt message - unknown error"
     
     # Get sender and recipient info
     sender = message.get_sender()

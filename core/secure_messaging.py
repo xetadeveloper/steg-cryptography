@@ -199,13 +199,7 @@ class SecureMessagingPipeline:
                 encrypted_message = base64.b64decode(payload['encrypted_message'])
                 iv = base64.b64decode(payload['iv'])
                 decrypted_message = aes_decrypt(encrypted_message, iv, aes_key)
-            
-            else:
-                return {
-                    'success': False,
-                    'error': 'User is neither sender nor recipient'
-                }
-            
+                
                 # Step 7: Mark message as read for recipient
                 message_obj.mark_as_read()
                 
@@ -214,6 +208,12 @@ class SecureMessagingPipeline:
                     'message': decrypted_message.decode('utf-8'),
                     'sender_id': payload['sender_id'],
                     'timestamp': payload['timestamp']
+                }
+            
+            else:
+                return {
+                    'success': False,
+                    'error': 'User is neither sender nor recipient'
                 }
             
         except Exception as e:
