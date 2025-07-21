@@ -202,7 +202,7 @@ def view_message(message_id):
         flash('You are not authorized to view this message.', 'error')
         return redirect(url_for('main.inbox'))
     
-    # Decrypt the message if recipient is viewing
+    # Only decrypt if user is the recipient
     decrypted_message = None
     decryption_error = None
     
@@ -281,10 +281,10 @@ def decrypt_message_auto():
         if not message:
             return jsonify({'success': False, 'error': 'Message not found'}), 404
             
-        # Verify user is the recipient (handle string/ObjectId comparison)
+        # Only recipients can decrypt messages since they were encrypted with recipient's public key
         print(f"Debug: message.recipient_id={message.recipient_id}, current_user.id={current_user.id}")
         if str(message.recipient_id) != str(current_user.id):
-            return jsonify({'success': False, 'error': f'Unauthorized: recipient_id={message.recipient_id}, user_id={current_user.id}'}), 403
+            return jsonify({'success': False, 'error': f'Only recipients can decrypt messages'}), 403
             
         # Use stored RSA private key and default HMAC key
         rsa_private_key = current_user.private_key_pem
