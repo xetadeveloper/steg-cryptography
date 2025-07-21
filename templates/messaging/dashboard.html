@@ -160,7 +160,7 @@
                                                 <div class="flex-grow-1">
                                                     <div class="d-flex align-items-center mb-1">
                                                         <strong class="me-2">To: {{ message.get_recipient().display_name }}</strong>
-                                                        <span class="badge bg-success">{{ message.delivery_status.title() }}</span>
+                                                        <span class="badge bg-success">Sent</span>
                                                         {% if message.is_steganographic() %}
                                                             <span class="badge bg-info ms-2">
                                                                 <i data-feather="image" class="small me-1"></i>

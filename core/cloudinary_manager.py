@@ -69,14 +69,14 @@ class CloudinaryManager:
             # Create unique filename
             filename = f"msg_{message_id}_{sender_id}_to_{recipient_id}"
             
-            # Upload to Cloudinary in cryptostego folder
+            # Upload to Cloudinary in cryptosteganography folder
             result = cloudinary.uploader.upload(
                 image_data,
-                folder="cryptostego",
+                folder="cryptosteganography",
                 public_id=filename,
                 resource_type="image",
                 format="png",  # Ensure PNG format for steganography
-                tags=["cryptostego", f"sender_{sender_id}", f"recipient_{recipient_id}"]
+                tags=["cryptosteganography", f"sender_{sender_id}", f"recipient_{recipient_id}"]
             )
             
             return {
@@ -194,7 +194,7 @@ class CloudinaryManager:
             print(f"Error generating image URL: {e}")
             return None
     
-    def upload_image(self, image_data, filename=None, folder="default_images"):
+    def upload_image(self, image_data, filename=None, folder="cryptosteganography/default_images"):
         """
         Upload a default user image to Cloudinary.
         

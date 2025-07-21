@@ -250,6 +250,7 @@ class Message:
             self.encrypted_aes_key = message_data.get('encrypted_aes_key')
             self.hmac_signature = message_data.get('hmac_signature')
             self.cover_image_name = message_data.get('cover_image_name', 'uploaded_image.png')
+            self.subject = message_data.get('subject', 'Encrypted Message')
             self.timestamp = message_data.get('timestamp')
             self.is_read = message_data.get('is_read', False)
         else:
@@ -261,6 +262,7 @@ class Message:
             self.encrypted_aes_key = None
             self.hmac_signature = None
             self.cover_image_name = 'uploaded_image.png'
+            self.subject = 'Encrypted Message'
             self.timestamp = None
             self.is_read = False
     
@@ -320,13 +322,15 @@ class Message:
     
     def get_message_size(self):
         """Calculate approximate message size for display."""
-        content_size = len(self.encrypted_content) if self.encrypted_content else 0
-        image_size = len(self.stego_image_data) if self.stego_image_data else 0
-        return content_size + image_size
+        # Estimate size based on available data
+        aes_key_size = len(self.encrypted_aes_key) if self.encrypted_aes_key else 0
+        hmac_size = len(self.hmac_signature) if self.hmac_signature else 0
+        return aes_key_size + hmac_size
     
     def is_steganographic(self):
         """Check if message uses steganography."""
-        return self.message_type == 'steganographic' and self.stego_image_data is not None
+        # In our system, all messages are steganographic if they have a cloudinary image
+        return self.cloudinary_public_id is not None
     
     def to_dict(self):
         """Convert message to dictionary for JSON serialization."""
@@ -339,10 +343,10 @@ class Message:
             'sender_display': sender.display_name if sender else 'Unknown',
             'recipient': recipient.username if recipient else 'Unknown',
             'subject': self.subject,
-            'message_type': self.message_type,
+            'message_type': 'steganographic',
             'timestamp': self.timestamp.isoformat() if self.timestamp else None,
             'is_read': self.is_read,
-            'delivery_status': self.delivery_status,
+            'delivery_status': getattr(self, 'delivery_status', 'delivered'),
             'has_image': self.is_steganographic()
         }
 
