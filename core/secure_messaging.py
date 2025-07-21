@@ -94,7 +94,8 @@ class SecureMessagingPipeline:
                 cloudinary_url=cloudinary_result['url'],
                 encrypted_aes_key=base64.b64encode(encrypted_aes_key).decode(),
                 hmac_signature=hmac_signature,
-                cover_image_name=f"message_{message_id}.png"
+                cover_image_name=f"message_{message_id}.png",
+                subject=f"Message from {sender_user.display_name}"
             )
             
             return {

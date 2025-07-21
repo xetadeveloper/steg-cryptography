@@ -161,22 +161,6 @@ def compose():
             
             except Exception as e:
                 flash(f'Error sending message: {str(e)}', 'error')
-                from core.secure_messaging import secure_messaging
-                result = secure_messaging.send_message(
-                    sender_user=current_user,
-                    recipient_user=recipient,
-                    message_text=message,
-                    cover_image_data=image_data
-                )
-                
-                if result['success']:
-                    flash(f'Message sent successfully to {recipient.display_name}!', 'success')
-                    return redirect(url_for('main.dashboard'))
-                else:
-                    flash(f'Failed to send message: {result["error"]}', 'error')
-            
-            except Exception as e:
-                flash(f'Error processing image: {str(e)}', 'error')
         else:
             flash('Please upload a valid image file (PNG, JPG, JPEG).', 'error')
     

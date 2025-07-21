@@ -253,6 +253,7 @@ class Message:
             self.subject = message_data.get('subject', 'Encrypted Message')
             self.timestamp = message_data.get('timestamp')
             self.is_read = message_data.get('is_read', False)
+            self.delivery_status = message_data.get('delivery_status', 'delivered')
         else:
             self.id = None
             self.sender_id = None
@@ -265,10 +266,11 @@ class Message:
             self.subject = 'Encrypted Message'
             self.timestamp = None
             self.is_read = False
+            self.delivery_status = 'pending'
     
     @staticmethod
     def create_message(sender_id, recipient_id, cloudinary_public_id, cloudinary_url,
-                      encrypted_aes_key, hmac_signature, cover_image_name=None):
+                      encrypted_aes_key, hmac_signature, cover_image_name=None, subject=None):
         """Create a new steganographic message."""
         message_doc = {
             'sender_id': ObjectId(sender_id),
@@ -278,8 +280,10 @@ class Message:
             'encrypted_aes_key': encrypted_aes_key,
             'hmac_signature': hmac_signature,
             'cover_image_name': cover_image_name or 'uploaded_image.png',
+            'subject': subject or 'Encrypted Message',
             'timestamp': datetime.now(timezone.utc),
-            'is_read': False
+            'is_read': False,
+            'delivery_status': 'delivered'
         }
         
         result = mongo.db.messages.insert_one(message_doc)
@@ -346,7 +350,7 @@ class Message:
             'message_type': 'steganographic',
             'timestamp': self.timestamp.isoformat() if self.timestamp else None,
             'is_read': self.is_read,
-            'delivery_status': getattr(self, 'delivery_status', 'delivered'),
+            'delivery_status': self.delivery_status,
             'has_image': self.is_steganographic()
         }
 

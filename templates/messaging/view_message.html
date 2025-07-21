@@ -231,16 +231,9 @@ document.getElementById('decryptForm').addEventListener('submit', function(e) {
     formData.append('encrypted_aes_key', '{{ message.encrypted_aes_key }}');
     formData.append('hmac_signature', '{{ message.hmac_signature }}');
     
-    {% if message.is_steganographic() %}
-        // For steganographic messages, we need to convert the base64 image back to a file
-        const imageData = '{{ message.stego_image_data|b64encode }}';
-        const binaryString = atob(imageData);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
-        const imageFile = new Blob([bytes], { type: 'image/png' });
-        formData.append('stego_image', imageFile, 'stego_image.png');
+    {% if message.is_steganographic() and message.cloudinary_url %}
+        // For steganographic messages, we need to fetch the image from Cloudinary
+        formData.append('cloudinary_url', '{{ message.cloudinary_url }}');
     {% endif %}
     
     fetch('{{ url_for("main.decrypt_data") }}', {

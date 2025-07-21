@@ -10,6 +10,8 @@ logging.basicConfig(level=logging.DEBUG)
 @app.template_filter('b64encode')
 def base64_encode_filter(data):
     """Base64 encode filter for templates."""
+    if data is None or str(data) == 'None':
+        return ''
     if isinstance(data, str):
         data = data.encode('utf-8')
     return base64.b64encode(data).decode('utf-8')
