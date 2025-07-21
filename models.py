@@ -249,6 +249,10 @@ class Message:
             self.cloudinary_url = message_data.get('cloudinary_url')
             self.encrypted_aes_key = message_data.get('encrypted_aes_key')
             self.hmac_signature = message_data.get('hmac_signature')
+            # Additional fields for sender's copy
+            self.sender_encrypted_aes_key = message_data.get('sender_encrypted_aes_key')
+            self.sender_encrypted_content = message_data.get('sender_encrypted_content')
+            self.sender_iv = message_data.get('sender_iv')
             self.cover_image_name = message_data.get('cover_image_name', 'uploaded_image.png')
             self.subject = message_data.get('subject', 'Encrypted Message')
             self.timestamp = message_data.get('timestamp')
@@ -262,6 +266,10 @@ class Message:
             self.cloudinary_url = None
             self.encrypted_aes_key = None
             self.hmac_signature = None
+            # Additional fields for sender's copy
+            self.sender_encrypted_aes_key = None
+            self.sender_encrypted_content = None
+            self.sender_iv = None
             self.cover_image_name = 'uploaded_image.png'
             self.subject = 'Encrypted Message'
             self.timestamp = None
@@ -270,8 +278,9 @@ class Message:
     
     @staticmethod
     def create_message(sender_id, recipient_id, cloudinary_public_id, cloudinary_url,
-                      encrypted_aes_key, hmac_signature, cover_image_name=None, subject=None):
-        """Create a new steganographic message."""
+                      encrypted_aes_key, hmac_signature, cover_image_name=None, subject=None,
+                      sender_encrypted_aes_key=None, sender_encrypted_content=None, sender_iv=None):
+        """Create a new steganographic message with dual encryption."""
         message_doc = {
             'sender_id': ObjectId(sender_id),
             'recipient_id': ObjectId(recipient_id),
@@ -283,7 +292,11 @@ class Message:
             'subject': subject or 'Encrypted Message',
             'timestamp': datetime.now(timezone.utc),
             'is_read': False,
-            'delivery_status': 'delivered'
+            'delivery_status': 'delivered',
+            # Sender's copy fields
+            'sender_encrypted_aes_key': sender_encrypted_aes_key,
+            'sender_encrypted_content': sender_encrypted_content,
+            'sender_iv': sender_iv
         }
         
         result = mongo.db.messages.insert_one(message_doc)

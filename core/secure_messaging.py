@@ -51,8 +51,14 @@ class SecureMessagingPipeline:
             message_bytes = message_text.encode('utf-8')
             encrypted_message, iv = aes_encrypt(message_bytes, aes_key)
             
-            # Step 2: Encrypt AES key with recipient's RSA public key
+            # Step 2a: Encrypt AES key with recipient's RSA public key
             encrypted_aes_key = rsa_encrypt(aes_key, recipient_user.public_key_pem)
+            
+            # Step 2b: Encrypt AES key with sender's RSA public key (for sender's copy)
+            sender_encrypted_aes_key = rsa_encrypt(aes_key, sender_user.public_key_pem)
+            
+            # Step 2c: Create sender's encrypted content copy (without steganography)
+            sender_encrypted_content, sender_iv = aes_encrypt(message_bytes, aes_key)
             
             # Step 3: Create payload for steganography
             payload = {
@@ -96,7 +102,11 @@ class SecureMessagingPipeline:
                 encrypted_aes_key=base64.b64encode(encrypted_aes_key).decode(),
                 hmac_signature=hmac_signature,
                 cover_image_name=f"message_{message_id}.png",
-                subject=subject or f"Message from {sender_user.display_name}"
+                subject=subject or f"Message from {sender_user.display_name}",
+                # Sender's copy data
+                sender_encrypted_aes_key=base64.b64encode(sender_encrypted_aes_key).decode(),
+                sender_encrypted_content=base64.b64encode(sender_encrypted_content).decode(),
+                sender_iv=base64.b64encode(sender_iv).decode()
             )
             
             return {
@@ -112,74 +122,99 @@ class SecureMessagingPipeline:
                 'error': str(e)
             }
     
-    def decrypt_message(self, message_obj, recipient_user):
+    def decrypt_message(self, message_obj, user):
         """
-        Decrypt a message from Cloudinary steganographic image.
+        Decrypt a message from Cloudinary steganographic image or sender's copy.
         
         Args:
             message_obj: Message object from database
-            recipient_user: User object of the recipient
+            user: User object (either sender or recipient)
             
         Returns:
             dict: Result with success status and decrypted message
         """
         try:
-            # Step 1: Download image from Cloudinary
-            stego_image_data = cloudinary_manager.download_stego_image(
-                message_obj.cloudinary_public_id
-            )
-            
-            if not stego_image_data:
+            # Check if user is sender and use sender's copy, otherwise use recipient's steganographic method
+            if str(message_obj.sender_id) == str(user.id) and message_obj.sender_encrypted_content:
+                # Sender viewing: use the sender's encrypted copy (no steganography needed)
+                encrypted_aes_key = base64.b64decode(message_obj.sender_encrypted_aes_key)
+                aes_key = rsa_decrypt(encrypted_aes_key, user.private_key_pem)
+                
+                encrypted_content = base64.b64decode(message_obj.sender_encrypted_content)
+                iv = base64.b64decode(message_obj.sender_iv)
+                decrypted_message = aes_decrypt(encrypted_content, iv, aes_key)
+                
                 return {
-                    'success': False,
-                    'error': 'Failed to download image from Cloudinary'
+                    'success': True,
+                    'message': decrypted_message.decode('utf-8'),
+                    'sender_id': message_obj.sender_id,
+                    'timestamp': message_obj.timestamp.isoformat() if message_obj.timestamp else None
                 }
             
-            # Step 2: Extract hidden data from steganographic image
-            hidden_data = decode_message_from_image(stego_image_data)
+            elif str(message_obj.recipient_id) == str(user.id):
+                # Recipient viewing: use steganographic method
+                # Step 1: Download image from Cloudinary
+                stego_image_data = cloudinary_manager.download_stego_image(
+                    message_obj.cloudinary_public_id
+                )
+                
+                if not stego_image_data:
+                    return {
+                        'success': False,
+                        'error': 'Failed to download image from Cloudinary'
+                    }
+                
+                # Step 2: Extract hidden data from steganographic image
+                hidden_data = decode_message_from_image(stego_image_data)
+                
+                if not hidden_data:
+                    return {
+                        'success': False,
+                        'error': 'Failed to extract hidden data from image'
+                    }
+                
+                # Step 3: Parse payload (convert string back to dict)
+                import ast
+                try:
+                    payload = ast.literal_eval(hidden_data.replace('"', "'"))
+                except:
+                    return {
+                        'success': False,
+                        'error': 'Failed to parse hidden payload'
+                    }
+                
+                # Step 4: Verify HMAC integrity
+                payload_json = str(payload).replace("'", '"')
+                if not verify_hmac(payload_json, message_obj.hmac_signature, self.hmac_key):
+                    return {
+                        'success': False,
+                        'error': 'Message integrity verification failed'
+                    }
+                
+                # Step 5: Decrypt AES key using recipient's RSA private key
+                encrypted_aes_key = base64.b64decode(payload['encrypted_aes_key'])
+                aes_key = rsa_decrypt(encrypted_aes_key, user.private_key_pem)
+                
+                # Step 6: Decrypt message using AES key
+                encrypted_message = base64.b64decode(payload['encrypted_message'])
+                iv = base64.b64decode(payload['iv'])
+                decrypted_message = aes_decrypt(encrypted_message, iv, aes_key)
             
-            if not hidden_data:
+            else:
                 return {
                     'success': False,
-                    'error': 'Failed to extract hidden data from image'
+                    'error': 'User is neither sender nor recipient'
                 }
             
-            # Step 3: Parse payload (convert string back to dict)
-            import ast
-            try:
-                payload = ast.literal_eval(hidden_data.replace('"', "'"))
-            except:
+                # Step 7: Mark message as read for recipient
+                message_obj.mark_as_read()
+                
                 return {
-                    'success': False,
-                    'error': 'Failed to parse hidden payload'
+                    'success': True,
+                    'message': decrypted_message.decode('utf-8'),
+                    'sender_id': payload['sender_id'],
+                    'timestamp': payload['timestamp']
                 }
-            
-            # Step 4: Verify HMAC integrity
-            payload_json = str(payload).replace("'", '"')
-            if not verify_hmac(payload_json, message_obj.hmac_signature, self.hmac_key):
-                return {
-                    'success': False,
-                    'error': 'Message integrity verification failed'
-                }
-            
-            # Step 5: Decrypt AES key using recipient's RSA private key
-            encrypted_aes_key = base64.b64decode(payload['encrypted_aes_key'])
-            aes_key = rsa_decrypt(encrypted_aes_key, recipient_user.private_key_pem)
-            
-            # Step 6: Decrypt message using AES key
-            encrypted_message = base64.b64decode(payload['encrypted_message'])
-            iv = base64.b64decode(payload['iv'])
-            decrypted_message = aes_decrypt(encrypted_message, iv, aes_key)
-            
-            # Step 7: Mark message as read
-            message_obj.mark_as_read()
-            
-            return {
-                'success': True,
-                'message': decrypted_message.decode('utf-8'),
-                'sender_id': payload['sender_id'],
-                'timestamp': payload['timestamp']
-            }
             
         except Exception as e:
             return {
