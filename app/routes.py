@@ -281,6 +281,68 @@ def decrypt_api():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@main.route('/decrypt_message_auto', methods=['POST'])
+@login_required
+def decrypt_message_auto():
+    """Automatic message decryption using stored user keys"""
+    try:
+        message_id = request.form.get('message_id')
+        if not message_id:
+            return jsonify({'success': False, 'error': 'Message ID required'}), 400
+            
+        # Get message from database
+        message = Message.find_by_id(message_id)
+        if not message:
+            return jsonify({'success': False, 'error': 'Message not found'}), 404
+            
+        # Verify user is the recipient
+        if message.recipient_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+            
+        # Use stored RSA private key and default HMAC key
+        rsa_private_key = current_user.private_key_pem
+        hmac_key = "cryptostego_app_default_key"  # Same as in secure_messaging.py
+        
+        if not rsa_private_key:
+            return jsonify({'success': False, 'error': 'No RSA private key found. Please generate keys in settings.'}), 400
+            
+        # Get encrypted data
+        encrypted_aes_key = base64.b64decode(message.encrypted_aes_key)
+        hmac_signature = message.hmac_signature
+        
+        # Download image from Cloudinary for steganographic messages
+        if message.is_steganographic() and message.cloudinary_url:
+            import requests
+            response = requests.get(message.cloudinary_url)
+            if response.status_code == 200:
+                stego_image_data = response.content
+                
+                # Run decryption pipeline
+                from core.decrypt_full import decrypt_full_pipeline
+                decryption_result = decrypt_full_pipeline(
+                    stego_image_data=stego_image_data,
+                    encrypted_aes_key=encrypted_aes_key,
+                    hmac_signature=hmac_signature,
+                    rsa_private_key_pem=rsa_private_key,
+                    hmac_key=hmac_key
+                )
+                
+                # Mark message as read
+                message.mark_as_read()
+                
+                return jsonify({
+                    'success': True,
+                    'decrypted_message': decryption_result['decrypted_message'],
+                    'hmac_verified': decryption_result['hmac_verified']
+                })
+            else:
+                return jsonify({'success': False, 'error': 'Failed to download steganographic image'}), 500
+        else:
+            return jsonify({'success': False, 'error': 'Message format not supported'}), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # API endpoints for encryption/decryption (keeping original functionality)
 @main.route('/api/encrypt', methods=['POST'])
 @login_required

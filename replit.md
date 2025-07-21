@@ -100,11 +100,12 @@ The application follows a modular Flask architecture with clear separation betwe
 ## Recent Updates (July 2025)
 
 ### Latest Fixes (July 21, 2025)
-- **Navigation Update**: Replaced separate "Inbox" and "Sent" navigation items with unified "Messages" option
-- **Cloudinary Configuration Fixed**: Updated to use environment variables for cloud_name, api_key, and api_secret
-- **Connection Testing**: Added automatic Cloudinary connection testing on startup
-- **Unified Inbox Interface**: Tabbed interface combining received and sent messages with statistics
-- **Route Optimization**: Sent messages route redirects to unified inbox with sent tab active
+- **Automatic Decryption**: Messages now decrypt using stored RSA keys instead of manual input
+- **Subject Display**: Message subjects properly shown in inbox listing and message view
+- **Loading Status**: Added spinner indicator when sending messages
+- **Template Fixes**: Resolved base64 filter errors and view template issues
+- **Message Model**: Fixed subject and delivery_status fields with proper initialization
+- **Route Optimization**: Fixed duplicate error handling and improved message processing
 
 ### Core Steganography Features  
 - **Enforced Steganography**: All messages must be hidden in images (no plain encryption option)

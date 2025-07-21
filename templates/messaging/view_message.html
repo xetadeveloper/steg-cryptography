@@ -67,23 +67,12 @@
                     <form id="decryptForm">
                         <div class="row">
                             <div class="col-md-6">
-                                <!-- RSA Private Key -->
+                                <!-- Key Information -->
                                 <div class="mb-3">
-                                    <label for="private_key" class="form-label">Your RSA Private Key *</label>
-                                    <textarea class="form-control" id="private_key" name="private_key" rows="8" 
-                                              placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" required></textarea>
-                                    <div class="form-text">
-                                        Enter your private RSA key to decrypt the AES key.
-                                    </div>
-                                </div>
-
-                                <!-- HMAC Key -->
-                                <div class="mb-3">
-                                    <label for="hmac_key" class="form-label">HMAC Key *</label>
-                                    <input type="text" class="form-control" id="hmac_key" name="hmac_key" 
-                                           value="default_hmac_key" placeholder="Enter HMAC key" required>
-                                    <div class="form-text">
-                                        The HMAC key used to verify message integrity.
+                                    <div class="alert alert-info">
+                                        <i data-feather="key" class="me-2"></i>
+                                        <strong>Automatic Decryption:</strong><br>
+                                        Your stored RSA private key and HMAC key will be used automatically to decrypt this message.
                                     </div>
                                 </div>
                             </div>
@@ -206,13 +195,7 @@ let decryptedMessageText = '';
 document.getElementById('decryptForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const privateKey = document.getElementById('private_key').value;
-    const hmacKey = document.getElementById('hmac_key').value;
-    
-    if (!privateKey || !hmacKey) {
-        alert('Please enter both your private key and HMAC key.');
-        return;
-    }
+    // Using stored keys automatically - no manual input needed
     
     const submitBtn = this.querySelector('button[type="submit"]');
     const originalContent = submitBtn.innerHTML;
@@ -226,17 +209,11 @@ document.getElementById('decryptForm').addEventListener('submit', function(e) {
     
     // Create FormData for the API call
     const formData = new FormData();
-    formData.append('rsa_private_key', privateKey);
-    formData.append('hmac_key', hmacKey);
-    formData.append('encrypted_aes_key', '{{ message.encrypted_aes_key }}');
-    formData.append('hmac_signature', '{{ message.hmac_signature }}');
+    formData.append('message_id', '{{ message.id }}');
     
-    {% if message.is_steganographic() and message.cloudinary_url %}
-        // For steganographic messages, we need to fetch the image from Cloudinary
-        formData.append('cloudinary_url', '{{ message.cloudinary_url }}');
-    {% endif %}
+    // Message ID is sufficient - server will handle key retrieval
     
-    fetch('{{ url_for("main.decrypt_data") }}', {
+    fetch('{{ url_for("main.decrypt_message_auto") }}', {
         method: 'POST',
         body: formData
     })
