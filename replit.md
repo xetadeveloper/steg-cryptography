@@ -100,12 +100,13 @@ The application follows a modular Flask architecture with clear separation betwe
 ## Recent Updates (July 2025)
 
 ### Latest Fixes (July 21, 2025)
-- **Automatic Decryption**: Messages now decrypt using stored RSA keys instead of manual input
-- **Subject Display**: Message subjects properly shown in inbox listing and message view
-- **Loading Status**: Added spinner indicator when sending messages
-- **Template Fixes**: Resolved base64 filter errors and view template issues
-- **Message Model**: Fixed subject and delivery_status fields with proper initialization
-- **Route Optimization**: Fixed duplicate error handling and improved message processing
+- **Dual Encryption System**: Implemented dual encryption allowing both senders and recipients to view messages
+- **Sender Message Viewing**: Senders can now decrypt and view messages they send without steganographic extraction
+- **Enhanced Message Model**: Added sender_encrypted_aes_key, sender_encrypted_content, and sender_iv fields
+- **Improved Security Pipeline**: Messages encrypted twice - once for recipient (steganographic) and once for sender (direct)
+- **Authorization Updates**: Both senders and recipients can access message content with proper key management
+- **Bug Fixes**: Resolved indentation issues causing NoneType errors in message decryption
+- **Template Fixes**: Enhanced error handling for failed decryption attempts
 
 ### Core Steganography Features  
 - **Enforced Steganography**: All messages must be hidden in images (no plain encryption option)
