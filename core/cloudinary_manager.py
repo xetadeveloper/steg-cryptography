@@ -17,12 +17,40 @@ class CloudinaryManager:
     
     def __init__(self):
         """Initialize Cloudinary configuration."""
+        # Use environment variables for security
+        cloud_name = os.environ.get("CLOUDINARY_CLOUD_NAME")
+        api_key = os.environ.get("CLOUDINARY_API_KEY")
+        api_secret = os.environ.get("CLOUDINARY_API_SECRET")
+        
+        if not cloud_name or not api_key or not api_secret:
+            raise ValueError("Missing CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, or CLOUDINARY_API_SECRET environment variables")
+        
         cloudinary.config(
-            cloud_name="dxnppwctu",  # Default cloud name - user can override with env var
-            api_key=os.environ.get("CLOUDINARY_API_KEY", "394723544873621"),
-            api_secret=os.environ.get("CLOUDINARY_API_SECRET", "QXau5sF0c0JsOeSQ3dtOjg3Wmgw"),
+            cloud_name=cloud_name,
+            api_key=api_key,
+            api_secret=api_secret,
             secure=True
         )
+        
+        # Test the configuration
+        self._test_connection()
+    
+    def _test_connection(self):
+        """Test Cloudinary connection by checking API credentials."""
+        try:
+            # Test with a simple upload to validate credentials
+            test_result = cloudinary.uploader.upload(
+                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+                public_id="test_connection",
+                folder="test",
+                overwrite=True
+            )
+            # Clean up test image
+            cloudinary.uploader.destroy("test/test_connection")
+            print("✓ Cloudinary connection successful")
+        except Exception as e:
+            print(f"✗ Cloudinary connection failed: {e}")
+            # Don't raise exception here, let it fail during actual upload
     
     def upload_stego_image(self, image_data, sender_id, recipient_id, message_id):
         """

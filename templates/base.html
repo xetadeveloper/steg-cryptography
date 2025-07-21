@@ -19,8 +19,7 @@
                 {% if current_user.is_authenticated %}
                     <a class="nav-link text-white" href="{{ url_for('main.dashboard') }}">Dashboard</a>
                     <a class="nav-link text-white" href="{{ url_for('main.compose') }}">Compose</a>
-                    <a class="nav-link text-white" href="{{ url_for('main.inbox') }}">Inbox</a>
-                    <a class="nav-link text-white" href="{{ url_for('main.sent') }}">Sent</a>
+                    <a class="nav-link text-white" href="{{ url_for('main.inbox') }}">Messages</a>
                     <a class="nav-link text-white" href="{{ url_for('main.manual_decrypt') }}">Manual Decrypt</a>
                     <a class="nav-link text-white" href="{{ url_for('auth.settings') }}">Settings</a>
                     <a class="nav-link text-white" href="{{ url_for('auth.logout') }}">Logout</a>

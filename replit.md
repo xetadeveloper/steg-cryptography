@@ -99,18 +99,26 @@ The application follows a modular Flask architecture with clear separation betwe
 
 ## Recent Updates (July 2025)
 
-### Steganography-Only Messaging System
-- **Enforced Steganography**: Removed plain encryption option - all messages must be hidden in images
+### Latest Fixes (July 21, 2025)
+- **Navigation Update**: Replaced separate "Inbox" and "Sent" navigation items with unified "Messages" option
+- **Cloudinary Configuration Fixed**: Updated to use environment variables for cloud_name, api_key, and api_secret
+- **Connection Testing**: Added automatic Cloudinary connection testing on startup
+- **Unified Inbox Interface**: Tabbed interface combining received and sent messages with statistics
+- **Route Optimization**: Sent messages route redirects to unified inbox with sent tab active
+
+### Core Steganography Features  
+- **Enforced Steganography**: All messages must be hidden in images (no plain encryption option)
 - **Default Image Support**: Users can set default steganography images stored in Cloudinary
-- **Automatic Key Management**: RSA keys automatically managed from user profiles (no manual input)
+- **Automatic Key Management**: RSA keys automatically managed from user profiles
+- **Custom Image Upload**: Enhanced compose form with proper image upload section display
 - **Image Preview**: Real-time preview of selected images in compose form
 - **Form Validation**: Required field validation before message submission
-- **Auto-Refresh Inbox**: 1-minute automatic refresh for new messages
 
-### Security Enhancements
-- **Cloudinary Integration**: Secure image storage with API key: 394723544873621
+### Security & Infrastructure
+- **Cloudinary Integration**: Secure image storage with environment-based credentials
 - **AES+RSA Pipeline**: Signal/WhatsApp-style encryption with automatic key exchange
 - **MongoDB Atlas**: Full database functionality with Alice/Bob test accounts
 - **Session Management**: Secure authentication with automatic RSA key generation
+- **Connection Validation**: Automatic testing of external service connections
 
 The application is designed to be easily deployable on various platforms while maintaining security best practices and providing a user-friendly interface for cryptographic steganography operations.
