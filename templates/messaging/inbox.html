@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Inbox - Secure Messaging{% endblock %}
+{% block title %}Messages - Secure Messaging{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -9,8 +9,8 @@
         <div class="col-12">
             <div class="d-flex align-items-center justify-content-between">
                 <h2>
-                    <i data-feather="inbox" class="me-2"></i>
-                    Inbox
+                    <i data-feather="mail" class="me-2"></i>
+                    Messages
                 </h2>
                 <div>
                     <a href="{{ url_for('main.compose') }}" class="btn btn-primary me-2">
@@ -38,143 +38,236 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Inbox Content -->
+    <!-- Tabs Navigation -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i data-feather="mail" class="me-2"></i>
-                        Received Messages
-                    </h5>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-secondary" id="refreshBtn">
-                            <i data-feather="refresh-cw" class="me-1"></i>
-                            Refresh
-                        </button>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
-                                    data-bs-toggle="dropdown">
-                                <i data-feather="filter" class="me-1"></i>
-                                Filter
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" data-filter="all">All Messages</a></li>
-                                <li><a class="dropdown-item" href="#" data-filter="unread">Unread Only</a></li>
-                                <li><a class="dropdown-item" href="#" data-filter="steganographic">Steganographic</a></li>
-                            </ul>
+            <ul class="nav nav-tabs mb-4" id="messagesTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="inbox-tab" data-bs-toggle="tab" data-bs-target="#inbox" type="button" role="tab">
+                        <i data-feather="inbox" class="me-2"></i>
+                        Inbox
+                        {% if unread_count > 0 %}
+                            <span class="badge bg-primary ms-2">{{ unread_count }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button" role="tab">
+                        <i data-feather="send" class="me-2"></i>
+                        Sent
+                        {% if sent_messages %}
+                            <span class="badge bg-secondary ms-2">{{ sent_messages|length }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="messagesTabContent">
+                <!-- Inbox Tab -->
+                <div class="tab-pane fade show active" id="inbox" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i data-feather="inbox" class="me-2"></i>
+                                Received Messages
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            {% if received_messages %}
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="50">Status</th>
+                                            <th width="150">From</th>
+                                            <th>Subject</th>
+                                            <th width="100">Type</th>
+                                            <th width="150">Date</th>
+                                            <th width="100">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for message in received_messages %}
+                                            <tr class="{% if not message.is_read %}table-primary{% endif %}">
+                                                <td>
+                                                    {% if message.is_read %}
+                                                        <i data-feather="mail-open" class="text-muted"></i>
+                                                    {% else %}
+                                                        <i data-feather="mail" class="text-primary"></i>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <strong>{{ message.get_sender().display_name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">@{{ message.get_sender().username }}</small>
+                                                </td>
+                                                <td>
+                                                    <div class="message-subject">
+                                                        {{ message.subject or 'No Subject' }}
+                                                    </div>
+                                                    {% if not message.is_read %}
+                                                        <span class="badge bg-primary">New</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">
+                                                        <i data-feather="image" class="me-1"></i>
+                                                        Stego
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <small>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                                                </td>
+                                                <td>
+                                                    <a href="{{ url_for('main.view_message', message_id=message.id) }}" 
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i data-feather="eye" class="me-1"></i>
+                                                        View
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i data-feather="inbox" class="text-muted mb-3" style="width: 4rem; height: 4rem;"></i>
+                                    <h5 class="text-muted">No messages in your inbox</h5>
+                                    <p class="text-muted">When someone sends you an encrypted message, it will appear here.</p>
+                                    <a href="{{ url_for('main.compose') }}" class="btn btn-primary">
+                                        <i data-feather="edit-3" class="me-2"></i>
+                                        Send your first message
+                                    </a>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
-                </div>
-                <div class="card-body p-0">
-                    {% if messages %}
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th width="50">Status</th>
-                                        <th width="150">From</th>
-                                        <th>Subject</th>
-                                        <th width="100">Type</th>
-                                        <th width="150">Date</th>
-                                        <th width="100">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for message in messages %}
-                                        <tr class="{% if not message.is_read %}table-info{% endif %}">
-                                            <td>
-                                                {% if not message.is_read %}
-                                                    <i data-feather="circle" class="text-primary" title="Unread"></i>
-                                                {% else %}
-                                                    <i data-feather="check-circle" class="text-muted" title="Read"></i>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <strong>{{ message.get_sender().display_name }}</strong>
-                                                <br>
-                                                <small class="text-muted">@{{ message.get_sender().username }}</small>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <span>{{ message.subject or 'No subject' }}</span>
-                                                    {% if message.is_steganographic() %}
-                                                        <i data-feather="image" class="ms-2 text-info" title="Steganographic message"></i>
-                                                    {% endif %}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                {% if message.is_steganographic() %}
-                                                    <span class="badge bg-info">Steganographic</span>
-                                                {% else %}
-                                                    <span class="badge bg-secondary">Encrypted</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <span title="{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">
-                                                    {{ message.timestamp.strftime('%m/%d %H:%M') }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <a href="{{ url_for('main.view_message', message_id=message.id) }}" 
-                                                       class="btn btn-outline-primary" title="View/Decrypt">
-                                                        <i data-feather="eye"></i>
-                                                    </a>
-                                                    <button class="btn btn-outline-danger" title="Delete" 
-                                                            onclick="deleteMessage('{{ message.id }}')">
-                                                        <i data-feather="trash-2"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+
+                    <!-- Inbox Statistics -->
+                    {% if received_messages %}
+                        <div class="card mt-4">
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <i data-feather="mail" class="text-primary mb-2"></i>
+                                        <h6>Total Messages</h6>
+                                        <h4>{{ received_messages|length }}</h4>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <i data-feather="mail-open" class="text-success mb-2"></i>
+                                        <h6>Read Messages</h6>
+                                        <h4>{{ received_messages|selectattr('is_read')|list|length }}</h4>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <i data-feather="bell" class="text-warning mb-2"></i>
+                                        <h6>Unread Messages</h6>
+                                        <h4>{{ unread_count }}</h4>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <i data-feather="image" class="text-info mb-2"></i>
+                                        <h6>Steganographic</h6>
+                                        <h4>{{ received_messages|length }}</h4>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i data-feather="inbox" class="text-muted mb-3" style="width: 4rem; height: 4rem;"></i>
-                            <h5 class="text-muted">No messages in your inbox</h5>
-                            <p class="text-muted">When someone sends you an encrypted message, it will appear here.</p>
-                            <a href="{{ url_for('main.compose') }}" class="btn btn-primary">
-                                <i data-feather="edit-3" class="me-2"></i>
-                                Send your first message
-                            </a>
+                    {% endif %}
+                </div>
+
+                <!-- Sent Tab -->
+                <div class="tab-pane fade" id="sent" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i data-feather="send" class="me-2"></i>
+                                Sent Messages
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            {% if sent_messages %}
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="150">To</th>
+                                            <th>Subject</th>
+                                            <th width="100">Type</th>
+                                            <th width="150">Date</th>
+                                            <th width="100">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for message in sent_messages %}
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ message.get_recipient().display_name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">@{{ message.get_recipient().username }}</small>
+                                                </td>
+                                                <td>
+                                                    <div class="message-subject">
+                                                        {{ message.subject or 'No Subject' }}
+                                                    </div>
+                                                    <span class="badge bg-success">Sent</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">
+                                                        <i data-feather="image" class="me-1"></i>
+                                                        Stego
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <small>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                                                </td>
+                                                <td>
+                                                    <a href="{{ url_for('main.view_message', message_id=message.id) }}" 
+                                                       class="btn btn-sm btn-outline-secondary">
+                                                        <i data-feather="eye" class="me-1"></i>
+                                                        View
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i data-feather="send" class="text-muted mb-3" style="width: 4rem; height: 4rem;"></i>
+                                    <h5 class="text-muted">No sent messages</h5>
+                                    <p class="text-muted">Messages you send will appear here.</p>
+                                    <a href="{{ url_for('main.compose') }}" class="btn btn-primary">
+                                        <i data-feather="edit-3" class="me-2"></i>
+                                        Send your first message
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Sent Statistics -->
+                    {% if sent_messages %}
+                        <div class="card mt-4">
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-4">
+                                        <i data-feather="send" class="text-primary mb-2"></i>
+                                        <h6>Total Sent</h6>
+                                        <h4>{{ sent_messages|length }}</h4>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <i data-feather="image" class="text-info mb-2"></i>
+                                        <h6>Steganographic</h6>
+                                        <h4>{{ sent_messages|length }}</h4>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <i data-feather="users" class="text-success mb-2"></i>
+                                        <h6>Recipients</h6>
+                                        <h4>{{ sent_messages|map(attribute='recipient_id')|unique|list|length }}</h4>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     {% endif %}
                 </div>
             </div>
-
-            <!-- Inbox Statistics -->
-            {% if messages %}
-                <div class="card mt-4">
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-3">
-                                <i data-feather="mail" class="text-primary mb-2"></i>
-                                <h6>Total Messages</h6>
-                                <h4>{{ messages|length }}</h4>
-                            </div>
-                            <div class="col-md-3">
-                                <i data-feather="circle" class="text-info mb-2"></i>
-                                <h6>Unread</h6>
-                                <h4>{{ messages|selectattr('is_read', 'false')|list|length }}</h4>
-                            </div>
-                            <div class="col-md-3">
-                                <i data-feather="image" class="text-warning mb-2"></i>
-                                <h6>Steganographic</h6>
-                                <h4>{{ messages|selectattr('message_type', 'equalto', 'steganographic')|list|length }}</h4>
-                            </div>
-                            <div class="col-md-3">
-                                <i data-feather="shield" class="text-success mb-2"></i>
-                                <h6>Encrypted</h6>
-                                <h4>{{ messages|length }}</h4>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
         </div>
     </div>
 </div>
@@ -185,42 +278,23 @@
 // Initialize Feather icons
 feather.replace();
 
-// Auto-refresh inbox every 1 minute
-setInterval(function() {
-    console.log('Auto-refreshing inbox...');
-    window.location.reload();
-}, 60000); // 60 seconds = 1 minute
-
-// Refresh button handler
-document.getElementById('refreshBtn').addEventListener('click', function() {
-    const btn = this;
-    const icon = btn.querySelector('[data-feather="refresh-cw"]');
+// Tab switching functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh for new messages (optional)
+    function refreshMessageCounts() {
+        // This could make an AJAX call to update badge counts
+        // For now, we'll just update the timestamp
+        console.log('Checking for new messages...');
+    }
     
-    btn.disabled = true;
-    icon.style.animation = 'spin 1s linear infinite';
+    // Refresh every 30 seconds
+    setInterval(refreshMessageCounts, 30000);
     
-    // Simulate refresh (reload page in real implementation)
-    setTimeout(() => {
-        location.reload();
-    }, 1000);
-});
-
-// Filter handlers
-document.querySelectorAll('[data-filter]').forEach(filter => {
-    filter.addEventListener('click', function(e) {
-        e.preventDefault();
-        const filterType = this.dataset.filter;
-        
-        // In a real implementation, this would filter the table rows
-        // For now, just show the filter being applied
-        const filterBtn = document.querySelector('.dropdown-toggle');
-        filterBtn.innerHTML = `<i data-feather="filter" class="me-1"></i>${this.textContent}`;
-        feather.replace();
-        
-        // Demo filter logic (in real app, this would be server-side)
-        const rows = document.querySelectorAll('tbody tr');
-        rows.forEach(row => {
-            row.style.display = 'table-row'; // Show all for demo
+    // Update feather icons when tabs are switched
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('shown.bs.tab', function() {
+            feather.replace();
         });
     });
 });
@@ -234,32 +308,5 @@ function deleteMessage(messageId) {
         event.target.closest('tr').remove();
     }
 }
-
-// Mark all as read functionality
-function markAllAsRead() {
-    if (confirm('Mark all messages as read?')) {
-        // In real implementation, this would make an API call
-        const unreadIcons = document.querySelectorAll('[data-feather="circle"]');
-        unreadIcons.forEach(icon => {
-            icon.setAttribute('data-feather', 'check-circle');
-            icon.classList.remove('text-primary');
-            icon.classList.add('text-muted');
-        });
-        
-        // Remove unread highlighting
-        document.querySelectorAll('.table-info').forEach(row => {
-            row.classList.remove('table-info');
-        });
-        
-        feather.replace();
-        alert('All messages marked as read!');
-    }
-}
-
-// Auto-refresh every 30 seconds (optional)
-setInterval(() => {
-    // In a real app, this would check for new messages
-    console.log('Checking for new messages...');
-}, 30000);
 </script>
 {% endblock %}

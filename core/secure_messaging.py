@@ -68,7 +68,7 @@ class SecureMessagingPipeline:
             hmac_signature = generate_hmac(payload_json, self.hmac_key)
             
             # Step 5: Hide encrypted data in image using steganography
-            stego_image_data = encode_message_in_image(payload_json, cover_image_data)
+            stego_image_data = encode_message_in_image(cover_image_data, payload_json)
             
             # Step 6: Upload to Cloudinary
             message_id = secrets.token_urlsafe(16)

@@ -187,16 +187,20 @@ def compose():
 @main.route('/inbox')
 @login_required
 def inbox():
-    """User inbox with all received messages."""
-    messages = current_user.get_received_messages(limit=50)
-    return render_template('messaging/inbox.html', messages=messages)
+    """User inbox with received and sent messages in tabs."""
+    received_messages = current_user.get_received_messages(limit=50)
+    sent_messages = current_user.get_sent_messages(limit=50)
+    unread_count = current_user.get_unread_count()
+    return render_template('messaging/inbox.html', 
+                         received_messages=received_messages,
+                         sent_messages=sent_messages,
+                         unread_count=unread_count)
 
 @main.route('/sent')
 @login_required
 def sent():
-    """User sent messages."""
-    messages = current_user.get_sent_messages(limit=50)
-    return render_template('messaging/sent.html', messages=messages)
+    """Redirect to inbox with sent tab active."""
+    return redirect(url_for('main.inbox') + '#sent')
 
 @main.route('/message/<message_id>')
 @login_required
