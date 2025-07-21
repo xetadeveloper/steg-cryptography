@@ -221,11 +221,9 @@ const coverImageInput = document.getElementById('cover_image');
 function toggleImageSource() {
     if (useCustomRadio.checked) {
         customImageSection.style.display = 'block';
-        // Show default image preview if user has one
-        {% if current_user.default_image_url %}
+        // Clear preview when switching to custom
         previewImg.src = '';
         imagePreview.style.display = 'none';
-        {% endif %}
     } else {
         customImageSection.style.display = 'none';
         // Show user's default image if they have one
@@ -291,27 +289,6 @@ document.getElementById('composeForm').addEventListener('submit', function(e) {
         return;
     }
     {% endif %}
-    const message = document.getElementById('message').value;
-    const recipient = document.getElementById('recipient').value;
-    const subject = document.getElementById('subject').value;
-    const messageType = document.getElementById('message_type').value;
-    
-    if (!message || !recipient) {
-        alert('Please enter a message and select a recipient first.');
-        return;
-    }
-    
-    const preview = `
-        To: ${recipient}
-        Subject: ${subject || 'No subject'}
-        Type: ${messageType}
-        
-        Message: ${message}
-        
-        This message will be encrypted with AES-256 and ${messageType === 'steganographic' ? 'hidden in an image' : 'sent as encrypted text'}.
-    `;
-    
-    alert(preview);
 });
 </script>
 {% endblock %}

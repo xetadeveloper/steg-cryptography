@@ -165,6 +165,67 @@ class CloudinaryManager:
         except Exception as e:
             print(f"Error generating image URL: {e}")
             return None
+    
+    def upload_image(self, image_data, filename=None, folder="default_images"):
+        """
+        Upload a default user image to Cloudinary.
+        
+        Args:
+            image_data (bytes): The image data to upload
+            filename (str): Optional filename for the image
+            folder (str): Cloudinary folder to store the image
+            
+        Returns:
+            dict: Upload result with success status, public_id, url, etc.
+        """
+        try:
+            # Create unique filename if not provided
+            if not filename:
+                import time
+                filename = f"image_{int(time.time())}"
+            
+            # Upload to Cloudinary
+            result = cloudinary.uploader.upload(
+                image_data,
+                folder=folder,
+                public_id=filename,
+                resource_type="image",
+                format="png",
+                overwrite=True,
+                tags=["default_image"]
+            )
+            
+            return {
+                'success': True,
+                'public_id': result['public_id'],
+                'url': result['secure_url'],
+                'cloudinary_id': result['public_id'],
+                'file_size': result.get('bytes', 0),
+                'format': result.get('format', 'png')
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def delete_image(self, public_id):
+        """
+        Delete an image from Cloudinary.
+        
+        Args:
+            public_id (str): Cloudinary public ID of the image to delete
+            
+        Returns:
+            bool: True if deletion was successful, False otherwise
+        """
+        try:
+            result = cloudinary.uploader.destroy(public_id)
+            return result.get('result') == 'ok'
+        except Exception as e:
+            print(f"Error deleting image from Cloudinary: {e}")
+            return False
 
 # Global instance
 cloudinary_manager = CloudinaryManager()
