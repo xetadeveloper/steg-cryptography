@@ -154,9 +154,11 @@
                                         <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary me-2">
                                             Cancel
                                         </a>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i data-feather="send" class="me-2"></i>
-                                            Send Message
+                                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                                            <span id="submitIcon">
+                                                <i data-feather="send" class="me-2"></i>
+                                            </span>
+                                            <span id="submitText">Send Message</span>
                                         </button>
                                     </div>
                                 </div>
@@ -289,6 +291,32 @@ document.getElementById('composeForm').addEventListener('submit', function(e) {
         return;
     }
     {% endif %}
+    
+    // Show loading state on submit button
+    const submitBtn = document.getElementById('submitBtn');
+    const submitIcon = document.getElementById('submitIcon');
+    const submitText = document.getElementById('submitText');
+    
+    if (submitBtn && submitIcon && submitText) {
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.classList.add('btn-secondary');
+        
+        submitIcon.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"></div>';
+        submitText.textContent = 'Processing...';
+        
+        // Add timeout to prevent permanent disable state
+        setTimeout(() => {
+            if (submitBtn.disabled) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-secondary');
+                submitBtn.classList.add('btn-primary');
+                submitIcon.innerHTML = '<i data-feather="send" class="me-2"></i>';
+                submitText.textContent = 'Send Message';
+                feather.replace();
+            }
+        }, 30000); // 30 second timeout
+    }
 });
 </script>
 {% endblock %}
